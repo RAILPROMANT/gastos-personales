@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/gastos.html",
+      "permanent": false
+    }
+  ]
+}
