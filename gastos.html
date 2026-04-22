@@ -583,10 +583,29 @@ tr:hover td{background:#fafbff}
 
 <!-- MODAL: Gasto fijo -->
 <div class="overlay" id="ov-fijo" onclick="hovc(event,'ov-fijo')">
-  <div class="modal" style="max-width:370px">
+  <div class="modal" style="max-width:460px">
     <h2 id="tit-fijo">➕ Agregar gasto fijo</h2>
     <div class="fr"><label>Concepto</label><input type="text" id="f-nom" placeholder="Ej: Alquiler"></div>
-    <div class="fr"><label>Monto mensual ($)</label><input type="number" id="f-mon" placeholder="0" step="1"></div>
+    <div class="fr"><label>Monto inicial ($)</label><input type="number" id="f-mon" placeholder="0" step="1"></div>
+    <div class="fr"><label>Mes de inicio</label>
+      <input type="month" id="f-ini" placeholder="YYYY-MM">
+      <small style="color:#64748b;font-size:.72rem">Dejá vacío si aplica desde siempre</small>
+    </div>
+    <div class="fr"><label>Mes de fin (opcional)</label>
+      <input type="month" id="f-fin" placeholder="YYYY-MM">
+      <small style="color:#64748b;font-size:.72rem">Dejá vacío si no tiene fin previsto</small>
+    </div>
+
+    <!-- Ajustes de monto -->
+    <div style="margin:14px 0 6px;padding-top:12px;border-top:1.5px dashed #e2e8f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:.88rem;color:#0f172a">📈 Ajustes de monto</strong>
+        <button type="button" class="btn bs" onclick="addAjuste()" style="font-size:.75rem;padding:5px 10px;background:#f1f5f9;color:#0f172a;border:1.5px solid #cbd5e1">＋ Agregar</button>
+      </div>
+      <small style="color:#64748b;font-size:.72rem;display:block;margin-bottom:8px">Cargá aumentos o cambios. A partir del mes indicado, el monto pasa a ser el nuevo.</small>
+      <div id="f-ajustes-list"></div>
+    </div>
+
     <input type="hidden" id="f-idx" value="-1">
     <div class="ma"><button class="btn bp" onclick="saveFijo()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-fijo')" style="flex:1">Cancelar</button></div>
   </div>
@@ -710,6 +729,29 @@ function ld(k){try{const v=localStorage.getItem("gc2_"+k);return v?JSON.parse(v)
 function sv(k,v){try{localStorage.setItem("gc2_"+k,JSON.stringify(v))}catch{}}
 
 const sumFijos  = ()=>fijos.reduce((s,g)=>s+g.m,0);
+
+// ── GASTOS FIJOS POR PERÍODO ──────────────────
+// Devuelve el monto que aplica a un fijo en un período dado.
+// Considera: mes de inicio, mes de fin y ajustes de monto.
+function montoFijoEnPer(fijo,key){
+  const ini=fijo.ini||null;
+  const fin=fijo.fin||null;
+  if(ini && key<ini) return 0;
+  if(fin && key>fin) return 0;
+  // Buscar el ajuste más reciente cuyo mes sea <= key
+  let monto=fijo.m;
+  if(Array.isArray(fijo.aj) && fijo.aj.length){
+    // ordenar ajustes por mes ascendente
+    const ajOrd=[...fijo.aj].sort((a,b)=>a.mes.localeCompare(b.mes));
+    ajOrd.forEach(a=>{ if(a.mes<=key) monto=a.m; });
+  }
+  return monto;
+}
+// Total de fijos para un período
+function fijosPorPer(key){
+  if(!key) return 0;
+  return fijos.reduce((s,g)=>s+montoFijoEnPer(g,key),0);
+}
 const sumIng    = ()=>ingresos.reduce((s,i)=>s+i.m,0);
 
 // ── INGRESOS POR PERÍODO ──────────────────────
@@ -784,8 +826,9 @@ function nvPorPer(){
 
 // ── RENDER INICIO ─────────────────────────────
 function rInicio(){
-  const tf=sumFijos();
-  const hoy=currentKey();const bbvaCur=BBVA.find(p=>p.key===hoy)||BBVA[0];const nv=nvPorPer();const nvpH=nv[hoy]||{v:0,mc:0};const egAbr=tf+(bbvaCur.visa+nvpH.v)+(bbvaCur.mc+nvpH.mc);
+  const hoy=currentKey();
+  const tf=fijosPorPer(hoy);
+  const bbvaCur=BBVA.find(p=>p.key===hoy)||BBVA[0];const nv=nvPorPer();const nvpH=nv[hoy]||{v:0,mc:0};const egAbr=tf+(bbvaCur.visa+nvpH.v)+(bbvaCur.mc+nvpH.mc);
   const ti=ingresosPorPer(hoy);
   const disp=ti>0?ti-egAbr:null;
   document.getElementById("sg").innerHTML=`
@@ -801,11 +844,11 @@ function rInicio(){
 
 // ── RENDER PROYECCIÓN ─────────────────────────
 function rProy(){
-  const tf=sumFijos();
   const nv=nvPorPer();
   const hoy=currentKey();
   let html="";
   BBVA.forEach(p=>{
+    const tf=fijosPorPer(p.key);
     const ti=ingresosPorPer(p.key);
     const isCur=(p.key===hoy);
     const isPast=p.key<hoy;
@@ -876,13 +919,39 @@ function rIngresos(){
 
 // ── RENDER FIJOS ──────────────────────────────
 function rFijos(){
-  const tf=sumFijos();
-  document.getElementById("lbl-total-fijos").textContent=`Total: ${$p(tf)}`;
-  document.getElementById("tfoot-fijos").innerHTML=`<strong>${$p(tf)}</strong>`;
+  const hoy=currentKey();
+  const tfHoy=fijosPorPer(hoy);
+  const tfBase=sumFijos();
+  document.getElementById("lbl-total-fijos").textContent=`Mes actual: ${$p(tfHoy)}`;
+  document.getElementById("tfoot-fijos").innerHTML=`<strong>${$p(tfHoy)}</strong>`;
+  if(!fijos.length){
+    document.getElementById("tb-fijos").innerHTML=`<tr><td colspan="4"><div class="empty" style="padding:24px"><div class="empty-icon">🏠</div><p>Sin gastos fijos cargados.</p></div></td></tr>`;
+    return;
+  }
   document.getElementById("tb-fijos").innerHTML=fijos.map((g,i)=>{
-    const pct=(g.m/tf*100).toFixed(1);
-    return `<tr>
-      <td>${g.n}</td><td class="ar">${$e(g.m)}</td>
+    const mHoy=montoFijoEnPer(g,hoy);
+    const pct=tfHoy>0?(mHoy/tfHoy*100).toFixed(1):"0";
+    const ini=g.ini?perLabel(g.ini):null;
+    const fin=g.fin?perLabel(g.fin):null;
+    // Buscar próximo ajuste futuro
+    let proxAj=null;
+    if(Array.isArray(g.aj) && g.aj.length){
+      const fut=g.aj.filter(a=>a.mes>hoy).sort((a,b)=>a.mes.localeCompare(b.mes));
+      if(fut.length) proxAj=fut[0];
+    }
+    // Vigencia text
+    let vigencia="";
+    if(ini || fin){
+      vigencia = `${ini?`Desde ${ini}`:"Siempre"}${fin?` hasta ${fin}`:""}`;
+    }
+    const activo=(!g.ini||hoy>=g.ini)&&(!g.fin||hoy<=g.fin);
+    return `<tr style="${!activo?"opacity:.5":""}">
+      <td>
+        <div>${g.n}${!activo?' <span style="font-size:.68rem;color:#94a3b8">(inactivo)</span>':''}</div>
+        ${vigencia?`<div style="font-size:.72rem;color:#64748b;margin-top:2px">${vigencia}</div>`:""}
+        ${proxAj?`<div style="font-size:.7rem;color:#d97706;margin-top:2px">📈 ${perLabel(proxAj.mes)}: ${$p(proxAj.m)}</div>`:""}
+      </td>
+      <td class="ar">${$e(mHoy)}</td>
       <td><div style="display:flex;align-items:center;gap:7px"><div class="prog" style="width:90px"><div class="pf" style="width:${pct}%;background:#0891b2"></div></div><span style="font-size:.76rem;color:#64748b">${pct}%</span></div></td>
       <td><button class="bi e" onclick="openModalFijo(${i})">✏️</button><button class="bi d" onclick="delFijo(${i})">🗑️</button></td>
     </tr>`;
@@ -931,7 +1000,6 @@ function rChart(){
   if(typeof Chart==="undefined"){ console.warn("Chart.js no cargó todavía"); return; }
   const ctx=cv.getContext("2d");
   const hoy=currentKey();const fut=BBVA.filter(p=>p.key>=hoy);
-  const tf=sumFijos();
   const nv=nvPorPer();
   if(ch)ch.destroy();
   ch=new Chart(ctx,{
@@ -939,7 +1007,7 @@ function rChart(){
     data:{
       labels:fut.map(p=>p.per),
       datasets:[
-        {label:"Gastos Fijos",data:fut.map(()=>tf),backgroundColor:"rgba(8,145,178,.7)",borderRadius:3,stack:"eg"},
+        {label:"Gastos Fijos",data:fut.map(p=>fijosPorPer(p.key)),backgroundColor:"rgba(8,145,178,.7)",borderRadius:3,stack:"eg"},
         {label:"Cuotas Visa",data:fut.map(p=>p.visa),backgroundColor:"rgba(30,77,140,.8)",borderRadius:3,stack:"eg"},
         {label:"Nuevos",data:fut.map(p=>{const nvp=nv[p.key]||{v:0,mc:0};return nvp.v+nvp.mc}),backgroundColor:"rgba(217,119,6,.8)",borderRadius:3,stack:"eg"},
         {label:"Ingreso",data:fut.map(p=>ingresosPorPer(p.key)),backgroundColor:"rgba(4,120,87,.25)",borderWidth:2,borderColor:"rgba(4,120,87,.7)",borderRadius:3,stack:"ing"},
@@ -994,14 +1062,53 @@ function openModalFijo(i=-1){
   document.getElementById("tit-fijo").textContent=i>=0?"✏️ Editar gasto fijo":"➕ Agregar gasto fijo";
   document.getElementById("f-nom").value=i>=0?fijos[i].n:"";
   document.getElementById("f-mon").value=i>=0?fijos[i].m:"";
+  document.getElementById("f-ini").value=i>=0?(fijos[i].ini||""):"";
+  document.getElementById("f-fin").value=i>=0?(fijos[i].fin||""):"";
+  // Cargar ajustes
+  ajustesTmp = (i>=0 && Array.isArray(fijos[i].aj)) ? JSON.parse(JSON.stringify(fijos[i].aj)) : [];
+  renderAjustes();
   openOv("ov-fijo");
+}
+// Ajustes temporales mientras se edita el modal
+let ajustesTmp=[];
+function addAjuste(){
+  ajustesTmp.push({mes:"",m:0});
+  renderAjustes();
+}
+function delAjuste(i){
+  ajustesTmp.splice(i,1);
+  renderAjustes();
+}
+function updateAjuste(i,campo,val){
+  if(campo==="mes") ajustesTmp[i].mes=val;
+  else if(campo==="m") ajustesTmp[i].m=parseFloat(val)||0;
+}
+function renderAjustes(){
+  const c=document.getElementById("f-ajustes-list");
+  if(!c) return;
+  if(!ajustesTmp.length){
+    c.innerHTML=`<div style="font-size:.75rem;color:#94a3b8;padding:6px 0">Sin ajustes cargados.</div>`;
+    return;
+  }
+  c.innerHTML=ajustesTmp.map((a,i)=>`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="month" value="${a.mes}" onchange="updateAjuste(${i},'mes',this.value)" style="flex:1;padding:6px 8px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.8rem">
+      <input type="number" value="${a.m||""}" placeholder="Nuevo monto" onchange="updateAjuste(${i},'m',this.value)" style="flex:1.2;padding:6px 8px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.8rem">
+      <button type="button" class="bi d" onclick="delAjuste(${i})">🗑️</button>
+    </div>
+  `).join("");
 }
 function saveFijo(){
   const n=document.getElementById("f-nom").value.trim();
   const m=parseFloat(document.getElementById("f-mon").value);
+  const ini=document.getElementById("f-ini").value||null;
+  const fin=document.getElementById("f-fin").value||null;
   const i=parseInt(document.getElementById("f-idx").value);
   if(!n||!m){alert("Completá nombre y monto.");return;}
-  if(i>=0)fijos[i]={n,m};else fijos.push({n,m});
+  // Filtrar ajustes válidos (con mes y monto)
+  const aj=ajustesTmp.filter(a=>a.mes && a.m>0).map(a=>({mes:a.mes,m:a.m}));
+  const obj={n,m,ini,fin,aj};
+  if(i>=0)fijos[i]=obj;else fijos.push(obj);
   sv("gf",fijos);closeOv("ov-fijo");rFijos();rInicio();rProy();rChart();
 }
 function delFijo(i){if(confirm(`¿Eliminar "${fijos[i].n}"?`)){fijos.splice(i,1);sv("gf",fijos);rFijos();rInicio();rProy();rChart();}}
@@ -1285,7 +1392,27 @@ if(document.readyState==="loading"){
 // ── PWA: registrar service worker ─────────────
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW no registrado:",e));
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      // Chequear updates cada vez que abrís la app
+      reg.update();
+      // Si hay versión nueva esperando, activarla y recargar
+      reg.addEventListener("updatefound",()=>{
+        const nw=reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange",()=>{
+          if(nw.state==="installed" && navigator.serviceWorker.controller){
+            nw.postMessage("skipWaiting");
+          }
+        });
+      });
+    }).catch(e=>console.warn("SW no registrado:",e));
+    // Cuando cambia el SW activo → recargar la página
+    let refreshing=false;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{
+      if(refreshing) return;
+      refreshing=true;
+      window.location.reload();
+    });
   });
 }
 </script>

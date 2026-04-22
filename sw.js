@@ -1,5 +1,7 @@
-// Service Worker básico — cachea la app para uso offline
-const CACHE = "gastos-v1";
+// Service Worker — auto-actualización
+const CACHE_VERSION = "v2";
+const CACHE_NAME = "gastos-" + CACHE_VERSION;
+
 const ASSETS = [
   "./",
   "./gastos.html",
@@ -8,42 +10,53 @@ const ASSETS = [
   "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
 ];
 
-// Instalar: cachear recursos
 self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {}))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS).catch(() => {})));
   self.skipWaiting();
 });
 
-// Activar: limpiar cachés viejos
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: red primero, cache como fallback
-// Excepción: Apps Script siempre va a la red (no se debe cachear)
 self.addEventListener("fetch", e => {
   const url = e.request.url;
-  // No interceptar llamadas a Apps Script ni otras APIs dinámicas
-  if (url.includes("script.google.com") || url.includes("googleusercontent.com")) {
-    return;
-  }
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        // Cachear respuestas exitosas de GET
-        if (e.request.method === "GET" && res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
-        }
-        return res;
+  if (url.includes("script.google.com") || url.includes("googleusercontent.com")) return;
+  if (e.request.method !== "GET") return;
+
+  const isHTML = e.request.mode === "navigate" || url.endsWith(".html") || url.endsWith(".js");
+
+  if (isHTML) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        return cached || fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone)).catch(() => {});
+          }
+          return res;
+        });
       })
-      .catch(() => caches.match(e.request))
-  );
+    );
+  }
+});
+
+self.addEventListener("message", e => {
+  if (e.data === "skipWaiting") self.skipWaiting();
 });
