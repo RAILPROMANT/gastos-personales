@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gestión de Gastos — Campiti</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f2748">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#eef2f7;color:#1e293b;min-height:100vh}
+.header{background:linear-gradient(135deg,#0f2748,#1e4d8c);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header h1{font-size:1.2rem;font-weight:800}.header p{font-size:.78rem;opacity:.7;margin-top:2px}
+.btn-header{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700}
+.btn-header:hover{background:rgba(255,255,255,.25)}
+.tabs{background:#fff;border-bottom:2px solid #e2e8f0;display:flex;overflow-x:auto;padding:0 8px;gap:2px}
+.tab{padding:12px 14px;cursor:pointer;font-size:.82rem;font-weight:600;color:#64748b;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;margin-bottom:-2px}
+.tab:hover{color:#1e4d8c;background:#f8faff}
+.tab.active{color:#1e4d8c;border-bottom-color:#1e4d8c;background:#f0f5ff}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.container{max-width:1180px;margin:0 auto;padding:20px 16px}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);margin-bottom:18px}
+/* Summary cards */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:18px}
+.sc{border-radius:14px;padding:18px;color:#fff;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:-15px;right:-15px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.1)}
+.sc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:8px}
+.sc .am{font-size:1.35rem;font-weight:800;line-height:1.1}
+.sc .sb{font-size:.7rem;opacity:.72;margin-top:4px}
+.c-fijos{background:linear-gradient(135deg,#0891b2,#22d3ee)}
+.c-ing{background:linear-gradient(135deg,#047857,#34d399)}
+.c-visa{background:linear-gradient(135deg,#1d4ed8,#60a5fa)}
+.c-master{background:linear-gradient(135deg,#b91c1c,#f87171)}
+.c-pos{background:linear-gradient(135deg,#065f46,#10b981)}
+.c-neg{background:linear-gradient(135deg,#7f1d1d,#ef4444)}
+/* Alerts */
+.alert{padding:12px 16px;border-radius:10px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;font-size:.85rem}
+.aw{background:#fefce8;border:1px solid #fde047;color:#854d0e}
+.ai{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.as{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+/* Section */
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.st{font-size:1rem;font-weight:800;color:#0f172a}
+/* Table */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.855rem}
+th{background:#f8fafc;color:#64748b;text-align:left;padding:9px 11px;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0}
+td{padding:9px 11px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.ar{text-align:right;font-variant-numeric:tabular-nums}
+.rtot td{background:#f0fdf4;font-weight:700;color:#064e3b}
+.rcur td{background:#fefce8}
+.rpos td{background:#f0fdf4}
+.rneg td{background:#fef2f2}
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:16px;font-size:.7rem;font-weight:700}
+.bv{background:#dbeafe;color:#1e40af}
+.bm{background:#fee2e2;color:#991b1b}
+.bc{background:#fef9c3;color:#78350f}
+.bp2{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:3px 9px;border-radius:16px;font-size:.7rem;font-weight:700}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;border:none;cursor:pointer;font-size:.84rem;font-weight:700;transition:all .2s}
+.bp{background:#1e4d8c;color:#fff}.bp:hover{background:#163d72}
+.bo{background:#fff;color:#1e4d8c;border:1.5px solid #1e4d8c}.bo:hover{background:#f0f5ff}
+.bs{padding:5px 10px;font-size:.77rem;border-radius:6px}
+.bi{background:none;border:none;cursor:pointer;padding:4px 7px;border-radius:6px;font-size:.95rem;transition:background .15s}
+.bi:hover{background:#f1f5f9}
+.bi.d:hover{background:#fef2f2}
+.bi.e:hover{background:#eff6ff}
+/* Chart */
+.cw{position:relative;height:230px;margin:6px 0}
+/* Progress */
+.prog{height:6px;background:#e2e8f0;border-radius:4px;overflow:hidden;min-width:70px}
+.pf{height:100%;border-radius:4px}
+/* Info cards */
+.ic{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.icd{background:#fff;border-radius:12px;padding:15px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid #e2e8f0}
+/* Balance */
+.bpos{color:#047857;font-weight:800}
+.bneg{color:#dc2626;font-weight:800}
+/* Overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:450px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h2{font-size:1.05rem;font-weight:800;margin-bottom:18px;color:#0f172a}
+.fr{margin-bottom:13px}
+.fr label{display:block;font-size:.78rem;font-weight:700;color:#374151;margin-bottom:5px}
+.fr input,.fr select{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.88rem;outline:none;transition:border-color .2s}
+.fr input:focus,.fr select:focus{border-color:#1e4d8c;box-shadow:0 0 0 3px rgba(30,77,140,.1)}
+.fh{font-size:.77rem;color:#94a3b8;margin-top:4px}
+.fh.ok{color:#047857}
+.ma{display:flex;gap:10px;margin-top:18px}
+/* Config */
+.cr{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f1f5f9;gap:12px}
+.cr:last-child{border-bottom:none}
+.cl{font-size:.88rem;color:#374151}
+.cl small{display:block;font-size:.76rem;color:#94a3b8;margin-top:2px}
+.ci{width:75px;padding:7px 9px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.88rem;text-align:center;outline:none}
+.ci:focus{border-color:#1e4d8c}
+.empty{text-align:center;padding:40px;color:#94a3b8}
+.vchip{font-size:.68rem;padding:2px 6px;border-radius:9px;background:#fee2e2;color:#991b1b;font-weight:700;margin-left:5px}
+/* ── MOBILE RESPONSIVE ─────────────────────────────────────── */
+
+/* Ocultar scrollbar en tabs pero mantener funcionalidad */
+.tabs{scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+
+/* Scroll suave en tablas */
+.tw{-webkit-overflow-scrolling:touch}
+
+@media(max-width:640px){
+
+  /* Fuente base un poco más chica */
+  body{font-size:15px}
+
+  /* Layout */
+  .container{padding:10px 8px}
+  .card{padding:14px 12px;border-radius:10px;margin-bottom:12px}
+
+  /* Header compacto */
+  .header{
+    padding:12px 14px;
+    padding-top:max(12px, env(safe-area-inset-top));
+  }
+  .header h1{font-size:.95rem}
+  .header p{font-size:.7rem}
+  .btn-header{padding:9px 12px;font-size:.78rem;min-height:40px}
+
+  /* Tabs — scroll horizontal sin scrollbar */
+  .tabs{
+    padding:0 2px;
+    gap:0;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .tab{
+    padding:13px 11px;
+    font-size:.73rem;
+    flex-shrink:0;
+    min-height:44px;  /* touch target mínimo Apple */
+    display:flex;align-items:center;
+  }
+
+  /* Cards de resumen 2 columnas */
+  .sg{grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+  .sc{padding:13px 11px;border-radius:12px}
+  .sc h3{font-size:.58rem;margin-bottom:5px}
+  .sc .am{font-size:1.05rem}
+  .sc .sb{font-size:.62rem}
+
+  /* Info cards (Visa/Master detalle) */
+  .ic{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .icd{padding:11px 10px}
+  .icd>div:first-child{font-size:.6rem}
+  .icd>div:nth-child(2){font-size:1.1rem !important}
+  .icd>div:last-child{font-size:.65rem !important}
+
+  /* Tablas con scroll horizontal suave */
+  .tw{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:8px;
+    /* Hint visual de scroll */
+    background:
+      linear-gradient(to right,#fff 20%,rgba(255,255,255,0)),
+      linear-gradient(to left,#fff 20%,rgba(255,255,255,0)) 100% 0;
+    background-size:40px 100%,40px 100%;
+    background-attachment:local,local;
+    background-repeat:no-repeat;
+  }
+  table{font-size:.77rem}
+  th{padding:7px 8px;font-size:.62rem}
+  td{padding:8px 8px;min-height:44px}
+
+  /* Proyección: mínimo ancho para que no aplaste */
+  #panel-proyeccion table{min-width:660px}
+  #panel-fijos table,#panel-ingresos table{min-width:340px}
+  #panel-nuevos table{min-width:560px}
+  #panel-visa table{min-width:400px}
+
+  /* Sección header */
+  .sh{flex-direction:column;align-items:flex-start;gap:8px}
+  .sh>div:last-child,
+  .sh>button{width:100%}
+  .st{font-size:.92rem}
+
+  /* Botones más grandes y tocables */
+  .btn{
+    padding:12px 16px;
+    font-size:.85rem;
+    min-height:44px;
+    justify-content:center;
+  }
+  .bs{
+    padding:10px 14px;
+    font-size:.8rem;
+    min-height:40px;
+  }
+  .bi{
+    padding:8px 10px;
+    font-size:1.05rem;
+    min-height:40px;
+    min-width:40px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* IMPORTANTE: evitar zoom en iOS al tocar inputs */
+  input,select,textarea{
+    font-size:16px !important;
+  }
+
+  /* Modal como bottom sheet */
+  .overlay{
+    align-items:flex-end;
+    padding:0;
+  }
+  .overlay .modal{
+    max-width:100% !important;
+    width:100%;
+    margin:0;
+    border-radius:20px 20px 0 0;
+    border-bottom-left-radius:0;
+    border-bottom-right-radius:0;
+    max-height:90vh;
+    padding:20px 16px;
+    padding-bottom:max(20px, env(safe-area-inset-bottom));
+  }
+  /* Handle bar en modales */
+  .modal::before{
+    content:'';
+    display:block;
+    width:36px;
+    height:4px;
+    background:#d1d5db;
+    border-radius:2px;
+    margin:0 auto 16px;
+  }
+
+  /* Chart más bajo en celu */
+  .cw{height:170px}
+
+  /* Alertas */
+  .alert{font-size:.79rem;padding:10px 12px;gap:8px}
+
+  /* Badges */
+  .badge{font-size:.62rem;padding:2px 6px}
+
+  /* Config rows */
+  .cr{flex-wrap:wrap;gap:8px;align-items:flex-start}
+  .cl{width:100%}
+  .ci{width:65px;font-size:16px !important}
+
+  /* Progress bars */
+  .prog{min-width:45px}
+
+  /* Textarea Gmail */
+  #gmail-json{font-size:14px !important;min-height:100px}
+
+  /* Gmail bloque instrucciones más legible */
+  #gmail-bloque-noconectado div{font-size:.82rem;line-height:1.8}
+
+  /* Vacíos */
+  .empty{padding:24px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div><h1>💳 Gestión de Gastos</h1><p>Campiti Joaquín · Abril 2026</p></div>
+  <button class="btn-header" onclick="openModalGasto()">＋ Nuevo gasto</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="inicio">🏠 Inicio</div>
+  <div class="tab" data-tab="proyeccion">📊 Proyección</div>
+  <div class="tab" data-tab="ingresos">💰 Ingresos</div>
+  <div class="tab" data-tab="fijos">📋 Fijos</div>
+  <div class="tab" data-tab="visa">💳 Visa</div>
+  <div class="tab" data-tab="master">💳 Master</div>
+  <div class="tab" data-tab="gmail">📧 Gmail</div>
+  <div class="tab" data-tab="nuevos">➕ Nuevos</div>
+  <div class="tab" data-tab="config">⚙️ Config</div>
+</div>
+
+<!-- INICIO -->
+<div class="tab-panel active" id="panel-inicio">
+<div class="container">
+  <div class="sg" id="sg"></div>
+  <div class="alert aw" id="alerta-vto">
+    ⚠️ <span><strong>Vencimiento 9 de abril:</strong> Visa $1.933.662,20 + U$S 33,46 · Mastercard $15.554,54</span>
+  </div>
+  <div class="card">
+    <div class="sh">
+      <div class="st">Cuotas Visa proyectadas</div>
+      <span class="bp2">📧 Gmail — Fase 2</span>
+    </div>
+    <div class="cw"><canvas id="chartMain"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="sh"><div class="st">Cuotas activas — Visa</div></div>
+    <div class="tw">
+      <table><thead><tr><th>Descripción</th><th>Cuota</th><th class="ar">$ / cuota</th><th>Restan</th><th class="ar">Pendiente</th></tr></thead>
+      <tbody id="tb-cuotas"></tbody></table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PROYECCIÓN -->
+<div class="tab-panel" id="panel-proyeccion">
+<div class="container">
+  <div class="card">
+    <div class="sh">
+      <div class="st">Proyección mensual</div>
+      <span class="bp2">📧 Gmail — Fase 2</span>
+    </div>
+    <div class="alert ai">
+      💡 Los ingresos se toman del total cargado en la pestaña <strong>💰 Ingresos</strong>. El disponible = Ingresos − Egresos del mes.
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Período</th><th>Vto.</th>
+          <th class="ar">Ingresos</th>
+          <th class="ar">Gastos Fijos</th>
+          <th class="ar">Cuotas Visa</th>
+          <th class="ar">Mastercard</th>
+          <th class="ar">Nuevos</th>
+          <th class="ar">Total Egresos</th>
+          <th class="ar">Disponible</th>
+        </tr></thead>
+        <tbody id="tb-proy"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- INGRESOS -->
+<div class="tab-panel" id="panel-ingresos">
+<div class="container">
+  <div class="card">
+    <div class="sh">
+      <div class="st">Ingresos mensuales</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:1rem;font-weight:800;color:#047857" id="lbl-total-ing">Total: $0</div>
+        <button class="btn bp bs" onclick="openModalIngreso()">＋ Agregar</button>
+      </div>
+    </div>
+    <p style="font-size:.83rem;color:#64748b;margin-bottom:16px">Cargá todos tus ingresos mensuales (sueldo, alquileres, freelance, etc.). Este total se usa para calcular cuánto disponible te queda cada mes.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Concepto</th><th class="ar">Monto</th><th>% del total</th><th style="width:70px"></th></tr></thead>
+        <tbody id="tb-ing"></tbody>
+        <tfoot><tr class="rtot">
+          <td><strong>TOTAL MES ACTUAL</strong></td>
+          <td class="ar" id="tfoot-ing"><strong>$0</strong></td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- GASTOS FIJOS -->
+<div class="tab-panel" id="panel-fijos">
+<div class="container">
+  <div class="card">
+    <div class="sh">
+      <div class="st">Gastos Fijos Mensuales</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:1rem;font-weight:800;color:#0891b2" id="lbl-total-fijos">Total: $0</div>
+        <button class="btn bp bs" onclick="openModalFijo()">＋ Agregar</button>
+      </div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Concepto</th><th class="ar">Monto</th><th>% del total</th><th style="width:70px"></th></tr></thead>
+        <tbody id="tb-fijos"></tbody>
+        <tfoot><tr class="rtot">
+          <td><strong>TOTAL</strong></td>
+          <td class="ar" id="tfoot-fijos"><strong>$0</strong></td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- VISA -->
+<div class="tab-panel" id="panel-visa">
+<div class="container">
+  <div class="ic">
+    <div class="icd" style="border-left-color:#1d4ed8"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Saldo actual</div><div style="font-size:1.35rem;font-weight:800;color:#1d4ed8;margin-top:4px">$1.933.662,20</div><div style="font-size:.74rem;color:#64748b">+ U$S 33,46</div></div>
+    <div class="icd" style="border-left-color:#f59e0b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Vencimiento</div><div style="font-size:1.35rem;font-weight:800;color:#d97706;margin-top:4px">09 Abr 2026</div><div style="font-size:.74rem;color:#64748b">Cierre: 26 Mar · Próx: 30 Abr</div></div>
+    <div class="icd" style="border-left-color:#10b981"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Pago mínimo</div><div style="font-size:1.35rem;font-weight:800;color:#065f46;margin-top:4px">$264.340</div><div style="font-size:.74rem;color:#dc2626;font-weight:600">Recomendado: pago total</div></div>
+    <div class="icd" style="border-left-color:#6366f1"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Cierre día</div><div style="font-size:1.35rem;font-weight:800;color:#4338ca;margin-top:4px" id="lbl-visa-dia">Día 26</div><div style="font-size:.74rem;color:#64748b">Configurable en ⚙️</div></div>
+  </div>
+  <div class="card">
+    <div class="sh"><div class="st">Consumos — Visa Signature</div><span class="badge bv">Cuenta 1243589947</span></div>
+    <div class="tw"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Cuotas</th><th class="ar">Monto</th></tr></thead><tbody id="tb-visa"></tbody></table></div>
+  </div>
+</div>
+</div>
+
+<!-- MASTERCARD -->
+<div class="tab-panel" id="panel-master">
+<div class="container">
+  <div class="ic">
+    <div class="icd" style="border-left-color:#ef4444"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Saldo actual</div><div style="font-size:1.35rem;font-weight:800;color:#b91c1c;margin-top:4px">$15.554,54</div><div style="font-size:.74rem;color:#64748b">Sin dólares</div></div>
+    <div class="icd" style="border-left-color:#f59e0b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Vencimiento</div><div style="font-size:1.35rem;font-weight:800;color:#d97706;margin-top:4px">09 Abr 2026</div><div style="font-size:.74rem;color:#64748b">Cierre: 26 Mar · Próx: 30 Abr</div></div>
+    <div class="icd" style="border-left-color:#10b981"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Pago mínimo</div><div style="font-size:1.35rem;font-weight:800;color:#065f46;margin-top:4px">$793</div><div style="font-size:.74rem;color:#dc2626;font-weight:600">Recomendado: pago total</div></div>
+    <div class="icd" style="border-left-color:#64748b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Cierre día</div><div style="font-size:1.35rem;font-weight:800;color:#475569;margin-top:4px" id="lbl-mc-dia">Día 26</div><div style="font-size:.74rem;color:#64748b">Configurable en ⚙️</div></div>
+  </div>
+  <div class="card">
+    <div class="sh"><div class="st">Consumos — Mastercard Black</div><span class="badge bm">Cuenta 1273063422</span></div>
+    <div class="tw"><table><thead><tr><th>Fecha</th><th>Descripción</th><th class="ar">Monto</th></tr></thead>
+    <tbody><tr><td>08-Mar-26</td><td>DLO*PEDIDOSYA SALV</td><td class="ar">$15.539,00</td></tr>
+    <tr class="rtot"><td colspan="2"><strong>Total consumos</strong></td><td class="ar"><strong>$15.539,00</strong></td></tr></tbody>
+    </table></div>
+    <div class="alert as" style="margin-top:14px">✅ <span>Sin cuotas pendientes.</span></div>
+  </div>
+</div>
+</div>
+
+<!-- GMAIL -->
+<div class="tab-panel" id="panel-gmail">
+<div class="container">
+
+  <!-- Stats bar -->
+  <div class="sg" id="gmail-stats" style="margin-bottom:16px"></div>
+
+  <!-- Paso 1: importar -->
+  <div class="card" id="gmail-paso1">
+    <div class="sh"><div class="st">📧 Importar consumos desde Gmail</div></div>
+
+    <!-- Bloque A: conectado (hay URL configurada) -->
+    <div id="gmail-bloque-conectado" style="display:none">
+      <div class="alert as" style="margin-bottom:16px">
+        ✅ <span>Script de Gmail conectado. Tocá el botón para traer los consumos nuevos del banco.</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn bp" id="btn-fetch-gmail" onclick="fetchGmail()" style="font-size:.95rem;padding:11px 22px">
+          🔄 Obtener nuevos consumos
+        </button>
+        <span style="font-size:.78rem;color:#94a3b8" id="gmail-ultimo"></span>
+      </div>
+    </div>
+
+    <!-- Bloque B: no conectado -->
+    <div id="gmail-bloque-noconectado">
+      <div class="alert aw" style="margin-bottom:18px">
+        ⚙️ <span>Todavía no configuraste la URL del script. Seguí los pasos de abajo <strong>una sola vez</strong> y después podés actualizar los consumos con un botón desde cualquier dispositivo.</span>
+      </div>
+      <div style="font-size:.85rem;color:#374151;line-height:1.7">
+        <strong>Pasos para configurar (solo la primera vez):</strong><br>
+        1. Abrí <strong>script.google.com</strong> en cualquier navegador<br>
+        2. Creá un proyecto nuevo (botón + Nuevo proyecto)<br>
+        3. Borrá todo el código que aparece y pegá el contenido de <strong>codigo-gmail.gs</strong><br>
+        4. Guardá (Ctrl+S) y hacé clic en <strong>Implementar → Nueva implementación</strong><br>
+        5. Tipo: Aplicación web · Ejecutar como: Yo · Quién puede acceder: <strong>Cualquier usuario</strong><br>
+        6. Copiá la URL que te da y pegala en <strong>⚙️ Config → URL Apps Script</strong>
+      </div>
+    </div>
+
+    <!-- Bloque C: pegado manual (siempre disponible como alternativa) -->
+    <details style="margin-top:18px">
+      <summary style="font-size:.82rem;color:#64748b;cursor:pointer;user-select:none">▾ Alternativa: pegar JSON manualmente</summary>
+      <div style="margin-top:12px">
+        <textarea id="gmail-json" rows="5" placeholder='[{"d":"MERCADO LIBRE","tar":"visa","fecha":"2026-04-10","monto":5000}]'
+          style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.8rem;resize:vertical;outline:none;color:#374151"></textarea>
+        <div id="gmail-json-err" style="color:#dc2626;font-size:.78rem;margin-top:4px;display:none"></div>
+        <button class="btn bp bs" onclick="parsearGmail()" style="margin-top:8px">▶ Previsualizar</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Paso 2: preview y cuotas -->
+  <div class="card" id="gmail-paso2" style="display:none">
+    <div class="sh">
+      <div class="st">2 · Revisá y asigná cuotas</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn bo bs" onclick="volverPaso1()">← Volver</button>
+        <button class="btn bp bs" onclick="importarTodo()" id="btn-importar">✅ Importar todos</button>
+      </div>
+    </div>
+    <p style="font-size:.83rem;color:#64748b;margin-bottom:14px">Revisá cada consumo, ajustá las cuotas si corresponde, y apretá Importar.</p>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Fecha</th>
+          <th>Descripción</th>
+          <th>Tarjeta</th>
+          <th>Período</th>
+          <th class="ar">Monto</th>
+          <th style="width:90px;text-align:center">Cuotas</th>
+          <th class="ar">$ / cuota</th>
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody id="gmail-preview-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Paso 3: historial importado -->
+  <div class="card">
+    <div class="sh">
+      <div class="st">Historial importado desde Gmail</div>
+      <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;font-size:.78rem" onclick="limpiarGmail()">🗑 Limpiar historial</button>
+    </div>
+    <div id="gmail-hist-cont"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- NUEVOS -->
+<div class="tab-panel" id="panel-nuevos">
+<div class="container">
+  <div class="alert ai">📧 <span><strong>Fase 2 — Gmail:</strong> Los consumos del Banco Francés llegarán automáticamente. Por ahora cargalos manualmente. El período se asigna según la fecha de cierre de cada tarjeta.</span></div>
+  <div class="card">
+    <div class="sh"><div class="st">Nuevos gastos</div><button class="btn bp" onclick="openModalGasto()">＋ Agregar</button></div>
+    <div id="cont-nuevos"></div>
+  </div>
+</div>
+</div>
+
+<!-- CONFIG -->
+<div class="tab-panel" id="panel-config">
+<div class="container">
+  <div class="card">
+    <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">📅 Fechas de cierre</div>
+    <div class="cr"><div class="cl">Día cierre Visa<small>Compras hasta este día caen en el resumen del mismo mes</small></div><input type="number" class="ci" id="cfg-visa" min="1" max="31" value="26" onchange="saveConfig()"></div>
+    <div class="cr"><div class="cl">Día cierre Mastercard</div><input type="number" class="ci" id="cfg-mc" min="1" max="31" value="26" onchange="saveConfig()"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin:18px 0 12px;padding-top:16px;border-top:2px solid #e2e8f0">📧 Conexión Gmail</div>
+    <div class="cr" style="flex-wrap:wrap;gap:8px;align-items:flex-start">
+      <div class="cl" style="min-width:160px">URL Apps Script<small>Pegá la URL del script desplegado en script.google.com</small></div>
+      <div style="flex:1;min-width:220px">
+        <input type="text" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..." style="width:100%;padding:7px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.79rem;outline:none" onchange="saveConfig()">
+        <div id="cfg-gas-status" style="font-size:.76rem;margin-top:5px;display:none"></div>
+      </div>
+    </div>
+    <div class="cr" style="margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0">
+      <div class="cl">Restablecer gastos fijos<small>Vuelve a los valores originales</small></div>
+      <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" onclick="resetFijos()">Restablecer</button>
+    </div>
+    <div class="cr">
+      <div class="cl">Limpiar nuevos gastos</div>
+      <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" onclick="resetNuevos()">Limpiar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL: Nuevo gasto -->
+<div class="overlay" id="ov-gasto" onclick="hovc(event,'ov-gasto')">
+  <div class="modal">
+    <h2>💳 Registrar nuevo gasto</h2>
+    <div class="fr"><label>Descripción</label><input type="text" id="g-desc" placeholder="Ej: MERCADO LIBRE"></div>
+    <div class="fr"><label>Tarjeta</label><select id="g-tar" onchange="updPer()"><option value="visa">Visa Signature</option><option value="master">Mastercard Black</option></select></div>
+    <div class="fr"><label>Fecha del consumo</label><input type="date" id="g-fecha" onchange="updPer()"></div>
+    <div class="fr"><label>Monto total ($)</label><input type="number" id="g-monto" placeholder="0" step="1" oninput="updCuota()"></div>
+    <div class="fr"><label>Cuotas</label><input type="number" id="g-cuotas" value="1" min="1" max="48" oninput="updCuota()"><div class="fh" id="g-cprev">Ingresá el monto.</div></div>
+    <div class="fh ok" id="g-pprev" style="padding:9px;background:#f0fdf4;border-radius:8px;margin-top:2px"></div>
+    <div class="ma"><button class="btn bp" onclick="saveGasto()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-gasto')" style="flex:1">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Gasto fijo -->
+<div class="overlay" id="ov-fijo" onclick="hovc(event,'ov-fijo')">
+  <div class="modal" style="max-width:370px">
+    <h2 id="tit-fijo">➕ Agregar gasto fijo</h2>
+    <div class="fr"><label>Concepto</label><input type="text" id="f-nom" placeholder="Ej: Alquiler"></div>
+    <div class="fr"><label>Monto mensual ($)</label><input type="number" id="f-mon" placeholder="0" step="1"></div>
+    <input type="hidden" id="f-idx" value="-1">
+    <div class="ma"><button class="btn bp" onclick="saveFijo()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-fijo')" style="flex:1">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Ingreso -->
+<div class="overlay" id="ov-ing" onclick="hovc(event,'ov-ing')">
+  <div class="modal" style="max-width:420px">
+    <h2 id="tit-ing">➕ Agregar ingreso</h2>
+    <div class="fr"><label>Concepto</label><input type="text" id="i-nom" placeholder="Ej: Sueldo neto"></div>
+    <div class="fr"><label>Monto ($)</label><input type="number" id="i-mon" placeholder="0" step="1"></div>
+    <div class="fr"><label>Tipo</label>
+      <select id="i-tipo" onchange="toggleIngFin()">
+        <option value="rec">Recurrente mensual</option>
+        <option value="una">Una sola vez</option>
+        <option value="agu">Aguinaldo (solo Jun y Dic)</option>
+      </select>
+    </div>
+    <div class="fr"><label>Mes de inicio</label>
+      <input type="month" id="i-ini" placeholder="YYYY-MM">
+      <small style="color:#64748b;font-size:.72rem">Dejá vacío si aplica desde siempre</small>
+    </div>
+    <div class="fr" id="fr-fin"><label>Mes de fin (opcional)</label>
+      <input type="month" id="i-fin" placeholder="YYYY-MM">
+      <small style="color:#64748b;font-size:.72rem">Dejá vacío si no tiene fin previsto</small>
+    </div>
+    <input type="hidden" id="i-idx" value="-1">
+    <div class="ma"><button class="btn bp" onclick="saveIngreso()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-ing')" style="flex:1">Cancelar</button></div>
+  </div>
+</div>
+
+<script>
+// ── DEFAULTS ──────────────────────────────────
+const DEF_FIJOS=[
+  {n:"Luz depto",m:50000},{n:"Agua depto",m:20000},{n:"Gas depto",m:30000},
+  {n:"Expensas depto",m:90000},{n:"Impuestos depto",m:50000},{n:"Internet depto",m:50000},
+  {n:"Internet casa",m:35000},{n:"Agua casa",m:10000},{n:"Impuestos casa",m:20000},
+  {n:"Cuota casa",m:120000},{n:"Celular",m:80000},{n:"Seguro camioneta",m:90000},
+  {n:"Cuota camioneta",m:580000},{n:"Seguro moto",m:25000},{n:"Juan",m:1300000},
+  {n:"Alejandra",m:500000},{n:"Psico",m:140000},{n:"Cochera",m:95000}
+];
+
+const VISA_TXS=[
+  {f:"01-Dic-24",d:"MERPAGO*HIDROLIT",c:16,t:18,m:9166.66,mo:"$"},
+  {f:"29-Sep-25",d:"G P V SOCIEDAD ANONIMA",c:6,t:9,m:96604.44,mo:"$"},
+  {f:"18-Oct-25",d:"NSS*NO ME OLVIDES",c:6,t:6,m:26583.33,mo:"$"},
+  {f:"18-Oct-25",d:"PRUNE - ALTO ROSARIO",c:6,t:6,m:30800.00,mo:"$"},
+  {f:"15-Dic-25",d:"ONCITY.COM",c:4,t:6,m:79999.63,mo:"$"},
+  {f:"22-Dic-25",d:"DLO*HUDSON COCINA",c:4,t:9,m:18843.55,mo:"$"},
+  {f:"07-Ene-26",d:"DLO*HUDSON COCINA",c:3,t:12,m:16774.01,mo:"$"},
+  {f:"29-Ene-26",d:"SPORT DAY SA",c:2,t:3,m:13333.00,mo:"$"},
+  {f:"26-Feb-26",d:"MERPAGO*KIOSCOEBER",c:null,t:null,m:11275.00,mo:"$"},
+  {f:"26-Feb-26",d:"MERPAGO*MELI",c:null,t:null,m:3490.00,mo:"$"},
+  {f:"26-Feb-26",d:"MERPAGO*COTO",c:null,t:null,m:3000.00,mo:"$"},
+  {f:"26-Feb-26",d:"SAO PINAMAR",c:null,t:null,m:14400.00,mo:"$"},
+  {f:"01-Mar-26",d:"GOOGLE *Workspace",c:null,t:null,m:5.88,mo:"U$S"},
+  {f:"01-Mar-26",d:"NETFLIX.COM",c:null,t:null,m:14.33,mo:"U$S"},
+  {f:"02-Mar-26",d:"MERPAGO*KELEDICIONES",c:null,t:null,m:42865.00,mo:"$"},
+  {f:"03-Mar-26",d:"MERPAGO*GARDENLIFE",c:null,t:null,m:59998.00,mo:"$"},
+  {f:"03-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:6108.00,mo:"$"},
+  {f:"05-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:34166.70,mo:"$"},
+  {f:"05-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:37000.00,mo:"$"},
+  {f:"05-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:8567.00,mo:"$"},
+  {f:"05-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3038.00,mo:"$"},
+  {f:"06-Mar-26",d:"GOOGLE *YouTube Premium",c:null,t:null,m:4.90,mo:"U$S"},
+  {f:"07-Mar-26",d:"ROBERTO CALZAVARA SRL",c:null,t:null,m:174977.85,mo:"$"},
+  {f:"07-Mar-26",d:"RAPIBAT",c:null,t:null,m:193700.00,mo:"$"},
+  {f:"07-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:4424.00,mo:"$"},
+  {f:"07-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3114.00,mo:"$"},
+  {f:"08-Mar-26",d:"PLAN OVALO SA",c:null,t:null,m:578114.11,mo:"$"},
+  {f:"08-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2603.00,mo:"$"},
+  {f:"08-Mar-26",d:"Spotify",c:null,t:null,m:2.35,mo:"U$S"},
+  {f:"09-Mar-26",d:"FEDERACION PATRONAL",c:null,t:null,m:22337.00,mo:"$"},
+  {f:"10-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2518.00,mo:"$"},
+  {f:"13-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3129.00,mo:"$"},
+  {f:"13-Mar-26",d:"EPE SANTA FE",c:null,t:null,m:14450.19,mo:"$"},
+  {f:"13-Mar-26",d:"EPE SANTA FE",c:null,t:null,m:36875.44,mo:"$"},
+  {f:"13-Mar-26",d:"ULTRAFIBRA",c:null,t:null,m:34950.00,mo:"$"},
+  {f:"14-Mar-26",d:"YPF OPECOM PLAYA",c:null,t:null,m:49362.00,mo:"$"},
+  {f:"15-Mar-26",d:"AFIP VEP 1600266070",c:null,t:null,m:38286.11,mo:"$"},
+  {f:"15-Mar-26",d:"AFIP VEP 1600266214",c:null,t:null,m:37265.97,mo:"$"},
+  {f:"15-Mar-26",d:"AFIP VEP 1600266455",c:null,t:null,m:37095.95,mo:"$"},
+  {f:"16-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3262.00,mo:"$"},
+  {f:"16-Mar-26",d:"SAMSHOP.COM",c:1,t:12,m:55833.25,mo:"$"},
+  {f:"17-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2566.00,mo:"$"},
+  {f:"18-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2607.00,mo:"$"},
+  {f:"20-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2818.00,mo:"$"},
+  {f:"22-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:8243.00,mo:"$"},
+  {f:"22-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:6196.00,mo:"$"},
+  {f:"24-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3180.00,mo:"$"},
+  {f:"24-Mar-26",d:"OPENAI *ChatGPT",c:null,t:null,m:6.00,mo:"U$S"},
+  {f:"25-Mar-26",d:"MERPAGO*MAURICIO",c:1,t:6,m:21666.70,mo:"$"},
+  {f:"25-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:34500.00,mo:"$"},
+  {f:"25-Mar-26",d:"GRAELLS NELSON",c:1,t:3,m:10666.68,mo:"$"},
+  {f:"25-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:4983.00,mo:"$"},
+  {f:"25-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3047.00,mo:"$"},
+];
+
+const BBVA=[
+  {per:"Mar 26",vto:"09 Abr",key:"2026-03",visa:1933662.20,mc:15554.54,cur:true},
+  {per:"Abr 26",vto:"~08 May",key:"2026-04",visa:383387.86,mc:0},
+  {per:"May 26",vto:"~08 Jun",key:"2026-05",visa:370054.86,mc:0},
+  {per:"Jun 26",vto:"~08 Jul",key:"2026-06",visa:184284.13,mc:0},
+  {per:"Jul 26",vto:"~08 Ago",key:"2026-07",visa:184284.13,mc:0},
+  {per:"Ago 26",vto:"~08 Sep",key:"2026-08",visa:184284.13,mc:0},
+  {per:"Sep 26",vto:"~08 Oct",key:"2026-09",visa:72607.26,mc:0},
+  {per:"Oct 26",vto:"~08 Nov",key:"2026-10",visa:72607.26,mc:0},
+  {per:"Nov 26",vto:"~08 Dic",key:"2026-11",visa:72607.26,mc:0},
+  {per:"Dic 26",vto:"~08 Ene",key:"2026-12",visa:72607.26,mc:0},
+  {per:"Ene 27",vto:"~08 Feb",key:"2027-01",visa:55833.25,mc:0},
+  {per:"Feb 27",vto:"~08 Mar",key:"2027-02",visa:55833.25,mc:0},
+];
+
+// ── STATE ─────────────────────────────────────
+let fijos   = ld("gf") || JSON.parse(JSON.stringify(DEF_FIJOS));
+let ingresos= ld("ig") || [];
+let nuevos  = ld("ng") || [];
+let cfg     = ld("cc") || {visaDia:26,mcDia:26,gasUrl:""};
+
+function ld(k){try{const v=localStorage.getItem("gc2_"+k);return v?JSON.parse(v):null}catch{return null}}
+function sv(k,v){try{localStorage.setItem("gc2_"+k,JSON.stringify(v))}catch{}}
+
+const sumFijos  = ()=>fijos.reduce((s,g)=>s+g.m,0);
+const sumIng    = ()=>ingresos.reduce((s,i)=>s+i.m,0);
+
+// ── INGRESOS POR PERÍODO ──────────────────────
+// key = "YYYY-MM". Devuelve el total de ingresos que aplican a ese período.
+// Para cada ingreso evalúa tipo, mes_inicio y mes_fin.
+function ingresosPorPer(key){
+  if(!key) return 0;
+  const [yy,mm]=key.split("-").map(Number);
+  let total=0;
+  ingresos.forEach(ing=>{
+    const tipo=ing.tipo||"rec";        // compat: viejos = recurrentes
+    const ini=ing.ini||null;            // "YYYY-MM" o null
+    const fin=ing.fin||null;
+    // Filtro por ventana de fechas
+    if(ini && key<ini) return;
+    if(fin && key>fin) return;
+    // Lógica por tipo
+    if(tipo==="rec"){
+      total+=ing.m;
+    }else if(tipo==="una"){
+      if(ini && key===ini) total+=ing.m;
+    }else if(tipo==="agu"){
+      if(mm===6 || mm===12) total+=ing.m;
+    }
+  });
+  return total;
+}
+
+// ── FORMAT ────────────────────────────────────
+const $p = n=>"$"+Math.round(n).toLocaleString("es-AR");
+const $e = n=>"$"+n.toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// ── PERÍODO LOGIC ─────────────────────────────
+function calcPer(fechaStr,tarjeta){
+  const d=new Date(fechaStr+"T12:00:00");
+  const dia=d.getDate();
+  const cierre=tarjeta==="visa"?cfg.visaDia:cfg.mcDia;
+  let y=d.getFullYear(),m=d.getMonth()+1;
+  if(dia>cierre){m++;if(m>12){m=1;y++;}}
+  return `${y}-${String(m).padStart(2,"0")}`;
+}
+// Período abierto actual (donde caen las compras de hoy)
+function currentKey(){
+  const now=new Date();
+  const dia=now.getDate();
+  const cierre=cfg.visaDia||26;
+  let y=now.getFullYear(),m=now.getMonth()+1;
+  if(dia>cierre){m++;if(m>12){m=1;y++;}}
+  return `${y}-${String(m).padStart(2,"0")}`;
+}
+function perLabel(key){
+  const [y,m]=key.split("-").map(Number);
+  const mn=["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  return `${mn[m]} ${String(y).slice(2)}`;
+}
+
+// ── NUEVOS POR PERÍODO ────────────────────────
+function nvPorPer(){
+  const mp={};
+  nuevos.forEach(g=>{
+    const[y,m]=g.pi.split("-").map(Number);
+    for(let i=0;i<g.c;i++){
+      let mm=m+i,yy=y+Math.floor((mm-1)/12);
+      mm=((mm-1)%12)+1;
+      const k=`${yy}-${String(mm).padStart(2,"0")}`;
+      if(!mp[k])mp[k]={v:0,mc:0};
+      mp[k][g.tar==="visa"?"v":"mc"]+=g.mpc;
+    }
+  });
+  return mp;
+}
+
+// ── RENDER INICIO ─────────────────────────────
+function rInicio(){
+  const tf=sumFijos();
+  const hoy=currentKey();const bbvaCur=BBVA.find(p=>p.key===hoy)||BBVA[0];const nv=nvPorPer();const nvpH=nv[hoy]||{v:0,mc:0};const egAbr=tf+(bbvaCur.visa+nvpH.v)+(bbvaCur.mc+nvpH.mc);
+  const ti=ingresosPorPer(hoy);
+  const disp=ti>0?ti-egAbr:null;
+  document.getElementById("sg").innerHTML=`
+    <div class="sc c-ing"><h3>Ingresos mensuales</h3><div class="am">${ti>0?$p(ti):"Sin cargar"}</div><div class="sb">${ingresos.length} concepto${ingresos.length!==1?"s":""}</div></div>
+    <div class="sc c-fijos"><h3>Gastos Fijos / mes</h3><div class="am">${$p(tf)}</div><div class="sb">${fijos.length} conceptos</div></div>
+    <div class="sc c-visa"><h3>Visa — vto. 09 Abr</h3><div class="am">$1.933.662</div><div class="sb">+ U$S 33,46</div></div>
+    <div class="sc ${disp===null?"c-master":disp>=0?"c-pos":"c-neg"}">
+      <h3>${disp===null?"Mastercard — vto. 09 Abr":"Disponible Abril"}</h3>
+      <div class="am">${disp===null?"$15.555":$p(disp)}</div>
+      <div class="sb">${disp===null?"Sin dólares":disp>=0?"Después de todos los egresos":"Déficit este mes"}</div>
+    </div>`;
+}
+
+// ── RENDER PROYECCIÓN ─────────────────────────
+function rProy(){
+  const tf=sumFijos();
+  const nv=nvPorPer();
+  const hoy=currentKey();
+  let html="";
+  BBVA.forEach(p=>{
+    const ti=ingresosPorPer(p.key);
+    const isCur=(p.key===hoy);
+    const isPast=p.key<hoy;
+    const nvp=nv[p.key]||{v:0,mc:0};
+    const nvt=nvp.v+nvp.mc;
+    // Para período actual y futuros: sumar nuevos; para pasados: solo BBVA
+    const egVisa=p.visa+(isPast?0:nvp.v);
+    const egMc=p.mc+(isPast?0:nvp.mc);
+    const egTotal=tf+egVisa+egMc;
+    const disp=ti>0?ti-egTotal:null;
+    const rowCls=isCur?"rcur":(isPast?"":disp!==null&&disp<0?"rneg":disp!==null&&disp>=0?"rpos":"");
+    const dispHtml=isPast
+      ?`<span style="color:#94a3b8;font-size:.78rem">pagado</span>`
+      :disp===null
+        ?`<span style="color:#94a3b8;font-size:.8rem">—</span>`
+        :`<span class="${disp>=0?"bpos":"bneg"}">${disp>=0?"＋":""}${$p(disp)}</span>`;
+    html+=`<tr class="${rowCls}" style="${isPast?"opacity:.55":""}">
+      <td><strong>${p.per}</strong>${isCur?`<span class="vchip">⚡ HOY</span>`:""}</td>
+      <td style="font-size:.8rem;color:#64748b">${p.vto}</td>
+      <td class="ar" style="color:#047857;font-weight:700">${ti>0?$p(ti):`<span style="color:#cbd5e1">—</span>`}</td>
+      <td class="ar">${$p(tf)}</td>
+      <td class="ar" style="color:#1d4ed8"><strong>${$p(p.visa)}</strong>${!isPast&&nvp.v>0?`<br><span style="font-size:.75rem;color:#d97706">+${$p(nvp.v)}</span>`:""}</td>
+      <td class="ar" style="color:#b91c1c">${p.mc>0||nvp.mc>0?$p(p.mc+nvp.mc):`<span style="color:#cbd5e1">—</span>`}</td>
+      <td class="ar" style="color:${nvt>0?"#d97706":"#cbd5e1"}">${nvt>0?$p(nvt):"—"}</td>
+      <td class="ar"><strong>${$p(egTotal)}</strong></td>
+      <td class="ar">${dispHtml}</td>
+    </tr>`;
+  });
+  document.getElementById("tb-proy").innerHTML=html;
+}
+
+// ── RENDER INGRESOS ───────────────────────────
+function rIngresos(){
+  // Total mostrado = ingresos del mes actual (lo que realmente cae hoy)
+  const hoy=currentKey();
+  const tiHoy=ingresosPorPer(hoy);
+  const tiBase=sumIng();  // suma "nominal" de todos los montos
+  document.getElementById("lbl-total-ing").textContent=`Mes actual: ${$p(tiHoy)}`;
+  document.getElementById("tfoot-ing").innerHTML=`<strong>${$p(tiHoy)}</strong>`;
+  if(!ingresos.length){
+    document.getElementById("tb-ing").innerHTML=`<tr><td colspan="4"><div class="empty" style="padding:24px"><div class="empty-icon">💰</div><p>Sin ingresos cargados. Agregá tu sueldo u otros ingresos.</p></div></td></tr>`;
+    return;
+  }
+  const labelTipo={rec:"Mensual",una:"1 vez",agu:"Aguinaldo"};
+  const colorTipo={rec:"#047857",una:"#d97706",agu:"#7c3aed"};
+  document.getElementById("tb-ing").innerHTML=ingresos.map((g,i)=>{
+    const tipo=g.tipo||"rec";
+    const pct=tiBase>0?(g.m/tiBase*100).toFixed(1):"0";
+    const mesIni=g.ini?perLabel(g.ini):"—";
+    const mesFin=g.fin?perLabel(g.fin):(tipo==="una"?"":"sin fin");
+    const vigencia=tipo==="una"
+      ? `<span style="font-size:.72rem;color:#64748b">Solo ${mesIni}</span>`
+      : `<span style="font-size:.72rem;color:#64748b">${g.ini?`Desde ${mesIni}`:"Desde siempre"}${g.fin?` hasta ${mesFin}`:""}</span>`;
+    return `<tr>
+      <td>
+        <div>${g.n}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:3px">
+          <span style="font-size:.68rem;padding:1px 7px;border-radius:6px;background:${colorTipo[tipo]}20;color:${colorTipo[tipo]};font-weight:700">${labelTipo[tipo]}</span>
+          ${vigencia}
+        </div>
+      </td>
+      <td class="ar">${$e(g.m)}</td>
+      <td><div style="display:flex;align-items:center;gap:7px"><div class="prog" style="width:90px"><div class="pf" style="width:${pct}%;background:#047857"></div></div><span style="font-size:.76rem;color:#64748b">${pct}%</span></div></td>
+      <td><button class="bi e" onclick="openModalIngreso(${i})">✏️</button><button class="bi d" onclick="delIng(${i})">🗑️</button></td>
+    </tr>`;
+  }).join("");
+}
+
+// ── RENDER FIJOS ──────────────────────────────
+function rFijos(){
+  const tf=sumFijos();
+  document.getElementById("lbl-total-fijos").textContent=`Total: ${$p(tf)}`;
+  document.getElementById("tfoot-fijos").innerHTML=`<strong>${$p(tf)}</strong>`;
+  document.getElementById("tb-fijos").innerHTML=fijos.map((g,i)=>{
+    const pct=(g.m/tf*100).toFixed(1);
+    return `<tr>
+      <td>${g.n}</td><td class="ar">${$e(g.m)}</td>
+      <td><div style="display:flex;align-items:center;gap:7px"><div class="prog" style="width:90px"><div class="pf" style="width:${pct}%;background:#0891b2"></div></div><span style="font-size:.76rem;color:#64748b">${pct}%</span></div></td>
+      <td><button class="bi e" onclick="openModalFijo(${i})">✏️</button><button class="bi d" onclick="delFijo(${i})">🗑️</button></td>
+    </tr>`;
+  }).join("");
+}
+
+// ── RENDER VISA ───────────────────────────────
+function rVisa(){
+  document.getElementById("tb-visa").innerHTML=VISA_TXS.map(t=>{
+    const b=t.c?`<span class="badge bc">${t.c}/${t.t}</span>`:`<span style="color:#cbd5e1;font-size:.78rem">—</span>`;
+    const ms=t.mo==="U$S"?`<span style="color:#0891b2;font-weight:600">U$S ${t.m.toFixed(2)}</span>`:$e(t.m);
+    return `<tr><td style="white-space:nowrap">${t.f}</td><td>${t.d}</td><td>${b}</td><td class="ar">${ms}</td></tr>`;
+  }).join("")+`<tr class="rtot"><td colspan="3"><strong>Total</strong></td><td class="ar"><strong>$1.908.783,57 + U$S 33,46</strong></td></tr>`;
+}
+
+// ── RENDER CUOTAS ─────────────────────────────
+function rCuotas(){
+  document.getElementById("tb-cuotas").innerHTML=VISA_TXS.filter(t=>t.c&&t.t&&t.c<t.t).map(t=>{
+    const r=t.t-t.c;
+    return `<tr><td>${t.d}</td><td><span class="badge bc">${t.c}/${t.t}</span></td><td class="ar">${$e(t.m)}</td><td><strong>${r}</strong> c.</td><td class="ar" style="color:#d97706;font-weight:800">${$p(r*t.m)}</td></tr>`;
+  }).join("");
+}
+
+// ── RENDER NUEVOS ─────────────────────────────
+function rNuevos(){
+  const c=document.getElementById("cont-nuevos");
+  if(!nuevos.length){c.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>Sin nuevos gastos.</p></div>`;return;}
+  c.innerHTML=`<div class="tw"><table><thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th>Período</th><th>Cuotas</th><th class="ar">$ / cuota</th><th class="ar">Total</th><th></th></tr></thead>
+  <tbody>${nuevos.map((g,i)=>`<tr>
+    <td>${g.d}</td>
+    <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+    <td>${g.fecha}</td>
+    <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(g.pi)}</span></td>
+    <td>${g.c===1?"Único":g.c+" c."}</td>
+    <td class="ar">${$p(g.mpc)}</td>
+    <td class="ar"><strong>${$p(g.mpc*g.c)}</strong></td>
+    <td><button class="bi d" onclick="delNuevo(${i})">✕</button></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+// ── CHART ─────────────────────────────────────
+let ch=null;
+function rChart(){
+  const cv=document.getElementById("chartMain");
+  if(!cv) return;
+  if(typeof Chart==="undefined"){ console.warn("Chart.js no cargó todavía"); return; }
+  const ctx=cv.getContext("2d");
+  const hoy=currentKey();const fut=BBVA.filter(p=>p.key>=hoy);
+  const tf=sumFijos();
+  const nv=nvPorPer();
+  if(ch)ch.destroy();
+  ch=new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:fut.map(p=>p.per),
+      datasets:[
+        {label:"Gastos Fijos",data:fut.map(()=>tf),backgroundColor:"rgba(8,145,178,.7)",borderRadius:3,stack:"eg"},
+        {label:"Cuotas Visa",data:fut.map(p=>p.visa),backgroundColor:"rgba(30,77,140,.8)",borderRadius:3,stack:"eg"},
+        {label:"Nuevos",data:fut.map(p=>{const nvp=nv[p.key]||{v:0,mc:0};return nvp.v+nvp.mc}),backgroundColor:"rgba(217,119,6,.8)",borderRadius:3,stack:"eg"},
+        {label:"Ingreso",data:fut.map(p=>ingresosPorPer(p.key)),backgroundColor:"rgba(4,120,87,.25)",borderWidth:2,borderColor:"rgba(4,120,87,.7)",borderRadius:3,stack:"ing"},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"bottom",labels:{boxWidth:11,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${$p(c.raw)}`}}},
+      scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v>=1e6?`$${(v/1e6).toFixed(1)}M`:v>=1000?`$${(v/1000).toFixed(0)}K`:"$0"}}}
+    }
+  });
+}
+
+// ── MODALS ────────────────────────────────────
+function openModalGasto(){
+  document.getElementById("g-fecha").value=new Date().toISOString().split("T")[0];
+  document.getElementById("g-cuotas").value=1;
+  document.getElementById("g-monto").value="";
+  document.getElementById("g-desc").value="";
+  updPer();updCuota();
+  openOv("ov-gasto");
+}
+function updPer(){
+  const f=document.getElementById("g-fecha").value;
+  const tar=document.getElementById("g-tar").value;
+  const el=document.getElementById("g-pprev");
+  if(!f){el.textContent="";return;}
+  const k=calcPer(f,tar);
+  const dia=new Date(f+"T12:00:00").getDate();
+  const cd=tar==="visa"?cfg.visaDia:cfg.mcDia;
+  el.innerHTML=`📅 Día ${dia} (cierre día ${cd}) → resumen de <strong>${perLabel(k)}</strong>`;
+}
+function updCuota(){
+  const m=parseFloat(document.getElementById("g-monto").value)||0;
+  const c=parseInt(document.getElementById("g-cuotas").value)||1;
+  document.getElementById("g-cprev").textContent=m>0?(c===1?`Pago único ${$p(m)}`:`${c} cuotas de ${$p(m/c)} c/u`):"Ingresá el monto.";
+}
+function saveGasto(){
+  const d=document.getElementById("g-desc").value.trim();
+  const tar=document.getElementById("g-tar").value;
+  const fecha=document.getElementById("g-fecha").value;
+  const monto=parseFloat(document.getElementById("g-monto").value);
+  const c=parseInt(document.getElementById("g-cuotas").value)||1;
+  if(!d||!fecha||!monto){alert("Completá todos los campos.");return;}
+  nuevos.push({d,tar,fecha,pi:calcPer(fecha,tar),c,mpc:monto/c});
+  sv("ng",nuevos);closeOv("ov-gasto");rNuevos();rProy();rChart();
+}
+function delNuevo(i){if(confirm("¿Eliminar?")){nuevos.splice(i,1);sv("ng",nuevos);rNuevos();rProy();rChart();}}
+
+function openModalFijo(i=-1){
+  document.getElementById("f-idx").value=i;
+  document.getElementById("tit-fijo").textContent=i>=0?"✏️ Editar gasto fijo":"➕ Agregar gasto fijo";
+  document.getElementById("f-nom").value=i>=0?fijos[i].n:"";
+  document.getElementById("f-mon").value=i>=0?fijos[i].m:"";
+  openOv("ov-fijo");
+}
+function saveFijo(){
+  const n=document.getElementById("f-nom").value.trim();
+  const m=parseFloat(document.getElementById("f-mon").value);
+  const i=parseInt(document.getElementById("f-idx").value);
+  if(!n||!m){alert("Completá nombre y monto.");return;}
+  if(i>=0)fijos[i]={n,m};else fijos.push({n,m});
+  sv("gf",fijos);closeOv("ov-fijo");rFijos();rInicio();rProy();rChart();
+}
+function delFijo(i){if(confirm(`¿Eliminar "${fijos[i].n}"?`)){fijos.splice(i,1);sv("gf",fijos);rFijos();rInicio();rProy();rChart();}}
+
+function openModalIngreso(i=-1){
+  document.getElementById("i-idx").value=i;
+  document.getElementById("tit-ing").textContent=i>=0?"✏️ Editar ingreso":"➕ Agregar ingreso";
+  document.getElementById("i-nom").value=i>=0?ingresos[i].n:"";
+  document.getElementById("i-mon").value=i>=0?ingresos[i].m:"";
+  document.getElementById("i-tipo").value=i>=0?(ingresos[i].tipo||"rec"):"rec";
+  document.getElementById("i-ini").value=i>=0?(ingresos[i].ini||""):"";
+  document.getElementById("i-fin").value=i>=0?(ingresos[i].fin||""):"";
+  toggleIngFin();
+  openOv("ov-ing");
+}
+// Muestra/oculta campo "fin" según el tipo
+function toggleIngFin(){
+  const tipo=document.getElementById("i-tipo").value;
+  const frFin=document.getElementById("fr-fin");
+  if(frFin) frFin.style.display=(tipo==="una")?"none":"";
+}
+function saveIngreso(){
+  const n=document.getElementById("i-nom").value.trim();
+  const m=parseFloat(document.getElementById("i-mon").value);
+  const tipo=document.getElementById("i-tipo").value;
+  const ini=document.getElementById("i-ini").value||null;
+  const fin=(tipo==="una")?null:(document.getElementById("i-fin").value||null);
+  const i=parseInt(document.getElementById("i-idx").value);
+  if(!n||!m){alert("Completá nombre y monto.");return;}
+  if(tipo==="una" && !ini){alert("Un ingreso de una sola vez requiere mes.");return;}
+  const obj={n,m,tipo,ini,fin};
+  if(i>=0)ingresos[i]=obj;else ingresos.push(obj);
+  sv("ig",ingresos);closeOv("ov-ing");rIngresos();rInicio();rProy();rChart();
+}
+function delIng(i){if(confirm(`¿Eliminar "${ingresos[i].n}"?`)){ingresos.splice(i,1);sv("ig",ingresos);rIngresos();rInicio();rProy();rChart();}}
+
+// ── CONFIG ────────────────────────────────────
+function loadCfg(){
+  document.getElementById("cfg-visa").value=cfg.visaDia||26;
+  document.getElementById("cfg-mc").value=cfg.mcDia||26;
+  document.getElementById("lbl-visa-dia").textContent=`Día ${cfg.visaDia||26}`;
+  document.getElementById("lbl-mc-dia").textContent=`Día ${cfg.mcDia||26}`;
+  const urlInput=document.getElementById("cfg-gas-url");
+  if(urlInput) urlInput.value=cfg.gasUrl||"";
+  updGmailBloque();
+}
+function saveConfig(){
+  cfg.visaDia=parseInt(document.getElementById("cfg-visa").value)||26;
+  cfg.mcDia=parseInt(document.getElementById("cfg-mc").value)||26;
+  cfg.gasUrl=(document.getElementById("cfg-gas-url").value||"").trim();
+  sv("cc",cfg);
+  loadCfg();
+  // Mostrar feedback en config
+  const st=document.getElementById("cfg-gas-status");
+  if(cfg.gasUrl){st.style.display="block";st.style.color="#047857";st.textContent="✅ URL guardada. Ahora podés usar el botón en la pestaña 📧 Gmail.";}
+  else{st.style.display="none";}
+}
+function updGmailBloque(){
+  const conn=document.getElementById("gmail-bloque-conectado");
+  const noconn=document.getElementById("gmail-bloque-noconectado");
+  if(!conn||!noconn)return;
+  const hay=!!(cfg.gasUrl&&cfg.gasUrl.startsWith("http"));
+  conn.style.display=hay?"block":"none";
+  noconn.style.display=hay?"none":"block";
+  const ult=document.getElementById("gmail-ultimo");
+  if(ult&&cfg.gasUltima)ult.textContent=`Última actualización: ${cfg.gasUltima}`;
+}
+
+// ── GMAIL FETCH ────────────────────────────────
+async function fetchGmail(){
+  if(!cfg.gasUrl){alert("Configurá primero la URL del script en ⚙️ Config.");return;}
+  const btn=document.getElementById("btn-fetch-gmail");
+  const orig=btn.innerHTML;
+  btn.innerHTML="⏳ Conectando...";btn.disabled=true;
+  try{
+    const resp=await fetch(cfg.gasUrl+"?dias=90",{redirect:"follow"});
+    if(!resp.ok)throw new Error(`Error HTTP ${resp.status}`);
+    const data=await resp.json();
+    if(!data.ok)throw new Error(data.error||"Error desconocido");
+    // Guardar timestamp
+    cfg.gasUltima=data.generado;sv("cc",cfg);
+    const ult=document.getElementById("gmail-ultimo");
+    if(ult)ult.textContent=`Actualizado: ${data.generado}`;
+    if(!data.consumos||!data.consumos.length){
+      alert("✅ Sin consumos nuevos en los últimos 90 días.");
+      btn.innerHTML=orig;btn.disabled=false;return;
+    }
+    // Filtrar ya importados
+    const vistos=new Set(gmailHist.map(g=>`${g.fecha}|${g.d}|${Math.round(g.mpc*g.c)}`));
+    const nuevosC=data.consumos.filter(c=>!vistos.has(`${c.fecha}|${c.d}|${Math.round(c.monto)}`));
+    if(!nuevosC.length){
+      alert(`Se encontraron ${data.consumos.length} consumos pero todos ya están importados.`);
+      btn.innerHTML=orig;btn.disabled=false;return;
+    }
+    gmailPending=nuevosC.map(x=>({...x,cuotas:1}));
+    renderGmailPreview();
+    document.getElementById("gmail-paso1").style.display="none";
+    document.getElementById("gmail-paso2").style.display="block";
+  }catch(err){
+    alert("❌ No se pudo conectar con Gmail:\n\n"+err.message+"\n\nVerificá:\n• Que la URL del script es correcta\n• Que la implementación está como \"Cualquier usuario\"\n• Que tenés conexión a internet");
+  }finally{
+    btn.innerHTML=orig;btn.disabled=false;
+  }
+}
+function resetFijos(){if(confirm("¿Restablecer gastos fijos?")){fijos=JSON.parse(JSON.stringify(DEF_FIJOS));sv("gf",fijos);rFijos();rInicio();rProy();rChart();}}
+function resetNuevos(){if(confirm("¿Eliminar todos los nuevos gastos?")){nuevos=[];sv("ng",nuevos);rNuevos();rProy();rChart();}}
+
+// ── GMAIL IMPORT ──────────────────────────────
+let gmailPending = []; // consumos parseados pendientes de confirmar
+let gmailHist    = ld("gh") || []; // historial ya importado
+
+function rGmailStats(){
+  const total = gmailHist.length;
+  const meses = [...new Set(gmailHist.map(g=>g.pi))].length;
+  const sumV  = gmailHist.filter(g=>g.tar==="visa").reduce((s,g)=>s+g.mpc*g.c,0);
+  const sumM  = gmailHist.filter(g=>g.tar==="master").reduce((s,g)=>s+g.mpc*g.c,0);
+  document.getElementById("gmail-stats").innerHTML=`
+    <div class="sc c-visa"><h3>Importados Visa</h3><div class="am">${$p(sumV)}</div><div class="sb">${gmailHist.filter(g=>g.tar==="visa").length} consumos</div></div>
+    <div class="sc c-master"><h3>Importados Master</h3><div class="am">${$p(sumM)}</div><div class="sb">${gmailHist.filter(g=>g.tar==="master").length} consumos</div></div>
+    <div class="sc c-fijos"><h3>Total importado</h3><div class="am">${total}</div><div class="sb">en ${meses} período${meses!==1?"s":""}</div></div>`;
+}
+
+function parsearGmail(){
+  const raw = document.getElementById("gmail-json").value.trim();
+  const err = document.getElementById("gmail-json-err");
+  err.style.display="none";
+  if(!raw){ err.textContent="Pegá el JSON primero."; err.style.display="block"; return; }
+  let items;
+  try{ items=JSON.parse(raw); }
+  catch(e){ err.textContent="JSON inválido: "+e.message; err.style.display="block"; return; }
+  if(!Array.isArray(items)||!items.length){ err.textContent="El JSON debe ser un array con al menos un consumo."; err.style.display="block"; return; }
+  // validar campos mínimos
+  for(let i=0;i<items.length;i++){
+    const x=items[i];
+    if(!x.d||!x.tar||!x.fecha||!x.monto){ err.textContent=`Item ${i+1} le falta campo (d, tar, fecha, monto).`; err.style.display="block"; return; }
+  }
+  gmailPending = items.map(x=>({...x, cuotas:x.cuotas||1}));
+  renderGmailPreview();
+  document.getElementById("gmail-paso1").style.display="none";
+  document.getElementById("gmail-paso2").style.display="block";
+}
+
+function renderGmailPreview(){
+  const body = document.getElementById("gmail-preview-body");
+  body.innerHTML = gmailPending.map((g,i)=>{
+    const per = calcPer(g.fecha, g.tar);
+    const mpc = g.monto / (g.cuotas||1);
+    return `<tr id="grow-${i}">
+      <td style="white-space:nowrap">${g.fecha}</td>
+      <td><strong>${g.d}</strong></td>
+      <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+      <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(per)}</span></td>
+      <td class="ar"><strong>${$p(g.monto)}</strong></td>
+      <td style="text-align:center">
+        <input type="number" min="1" max="48" value="${g.cuotas||1}" style="width:55px;padding:5px 7px;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem;text-align:center"
+          oninput="updGmailCuota(${i},this.value)" onchange="updGmailCuota(${i},this.value)">
+      </td>
+      <td class="ar" id="gmpc-${i}">${$p(mpc)}</td>
+      <td><button class="bi d" onclick="quitarGmailItem(${i})" title="Quitar">✕</button></td>
+    </tr>`;
+  }).join("");
+}
+
+function updGmailCuota(i, val){
+  const c = Math.max(1,parseInt(val)||1);
+  gmailPending[i].cuotas = c;
+  document.getElementById(`gmpc-${i}`).textContent = $p(gmailPending[i].monto / c);
+}
+
+function quitarGmailItem(i){
+  gmailPending.splice(i,1);
+  if(!gmailPending.length){ volverPaso1(); return; }
+  renderGmailPreview();
+}
+
+function volverPaso1(){
+  document.getElementById("gmail-paso2").style.display="none";
+  document.getElementById("gmail-paso1").style.display="block";
+  const ta=document.getElementById("gmail-json");
+  if(ta)ta.value="";
+  updGmailBloque();
+}
+
+function importarTodo(){
+  if(!gmailPending.length){ alert("Sin consumos para importar."); return; }
+  const ahora = new Date().toISOString().split("T")[0];
+  gmailPending.forEach(g=>{
+    const c = g.cuotas||1;
+    const mpc = g.monto/c;
+    const per = calcPer(g.fecha, g.tar);
+    const item = {d:g.d, tar:g.tar, fecha:g.fecha, pi:per, c, mpc, origen:"gmail", importado:ahora};
+    nuevos.push(item);
+    gmailHist.push(item);
+  });
+  sv("ng", nuevos);
+  sv("gh", gmailHist);
+  gmailPending=[];
+  volverPaso1();
+  rNuevos(); rProy(); rChart(); rGmailHist(); rGmailStats();
+  // mostrar confirmación
+  const p2 = document.getElementById("gmail-paso2");
+  p2.style.display="none";
+  const toast = document.createElement("div");
+  toast.className="alert as"; toast.style.cssText="margin-bottom:16px";
+  toast.innerHTML=`✅ <span>Consumos importados correctamente. Ya aparecen en <strong>Proyección</strong> y <strong>Nuevos</strong>.</span>`;
+  document.getElementById("gmail-paso1").parentNode.insertBefore(toast, document.getElementById("gmail-paso1"));
+  setTimeout(()=>toast.remove(),4000);
+}
+
+function rGmailHist(){
+  const cont = document.getElementById("gmail-hist-cont");
+  if(!gmailHist.length){
+    cont.innerHTML=`<div class="empty"><p>Todavía no importaste consumos desde Gmail. Cuando lo hagas, aparecerán acá.</p></div>`;
+    return;
+  }
+  cont.innerHTML=`<div class="tw"><table>
+    <thead><tr><th>Importado</th><th>Descripción</th><th>Tarjeta</th><th>Período</th><th>Cuotas</th><th class="ar">$ / cuota</th><th class="ar">Total</th></tr></thead>
+    <tbody>${gmailHist.map(g=>`<tr>
+      <td style="font-size:.78rem;color:#94a3b8">${g.importado||"—"}</td>
+      <td>${g.d}</td>
+      <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+      <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(g.pi)}</span></td>
+      <td>${g.c===1?"Único":g.c+" c."}</td>
+      <td class="ar">${$p(g.mpc)}</td>
+      <td class="ar"><strong>${$p(g.mpc*g.c)}</strong></td>
+    </tr>`).join("")}</tbody>
+  </table></div>`;
+}
+
+function limpiarGmail(){
+  if(confirm("¿Limpiar el historial de Gmail? Esto NO elimina los consumos ya importados en Proyección.")){
+    gmailHist=[];sv("gh",gmailHist);rGmailHist();rGmailStats();
+  }
+}
+
+// ── OVERLAY UTILS ─────────────────────────────
+function openOv(id){document.getElementById(id).classList.add("open")}
+function closeOv(id){document.getElementById(id).classList.remove("open")}
+function hovc(e,id){if(e.target===document.getElementById(id))closeOv(id)}
+
+// ── TABS + INIT ─────────────────────────────────
+// Helper: ejecuta una función aislando errores para que uno no rompa al resto
+function safe(fn, name){
+  try{ fn(); }
+  catch(e){ console.error("[init] error en "+name+":", e); }
+}
+
+function initApp(){
+  // 1) Registrar listeners de tabs PRIMERO — así, pase lo que pase después,
+  //    la navegación entre pestañas siempre funciona.
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click",()=>{
+      const n=t.dataset.tab;
+      document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
+      document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id===`panel-${n}`));
+      if(n==="inicio") safe(rChart,"rChart");
+    });
+  });
+
+  // 2) Correr inicializaciones aisladas — si una falla, el resto sigue andando
+  safe(rInicio,"rInicio");
+  safe(rProy,"rProy");
+  safe(rFijos,"rFijos");
+  safe(rIngresos,"rIngresos");
+  safe(rVisa,"rVisa");
+  safe(rCuotas,"rCuotas");
+  safe(rNuevos,"rNuevos");
+  safe(loadCfg,"loadCfg");
+  safe(rChart,"rChart");
+  safe(rGmailHist,"rGmailHist");
+  safe(rGmailStats,"rGmailStats");
+  safe(updGmailBloque,"updGmailBloque");
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded", initApp);
+}else{
+  initApp();
+}
+
+// ── PWA: registrar service worker ─────────────
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW no registrado:",e));
+  });
+}
+</script>
+</body>
+</html>

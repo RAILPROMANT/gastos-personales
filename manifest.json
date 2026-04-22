@@ -1,0 +1,20 @@
+{
+  "name": "Gestión de Gastos",
+  "short_name": "Gastos",
+  "description": "Control de gastos personales y proyección mensual",
+  "start_url": "./gastos.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#0f2748",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
