@@ -1,5 +1,5 @@
 // Service Worker — auto-actualización
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const CACHE_NAME = "gastos-" + CACHE_VERSION;
 
 const ASSETS = [

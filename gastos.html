@@ -288,6 +288,7 @@ tr:hover td{background:#fafbff}
   <div class="tab" data-tab="proyeccion">📊 Proyección</div>
   <div class="tab" data-tab="ingresos">💰 Ingresos</div>
   <div class="tab" data-tab="fijos">📋 Fijos</div>
+  <div class="tab" data-tab="tarjetas">💳 Tarjetas</div>
   <div class="tab" data-tab="visa">💳 Visa</div>
   <div class="tab" data-tab="master">💳 Master</div>
   <div class="tab" data-tab="gmail">📧 Gmail</div>
@@ -398,6 +399,49 @@ tr:hover td{background:#fafbff}
         </tr></tfoot>
       </table>
     </div>
+  </div>
+</div>
+</div>
+
+<!-- TARJETAS -->
+<div class="tab-panel" id="panel-tarjetas">
+<div class="container">
+  <!-- Resumen cards -->
+  <div class="sg" id="tj-resumen"></div>
+
+  <!-- Bloque: Pagos únicos -->
+  <div class="card">
+    <div class="sh">
+      <div class="st">💵 Pagos únicos (mes actual)</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn bs" id="tj-pu-visa" style="font-size:.72rem;padding:5px 10px;background:#1d4ed8;color:#fff;border:none" onclick="tjFiltroPU('visa')">Visa</button>
+        <button class="btn bs" id="tj-pu-master" style="font-size:.72rem;padding:5px 10px;background:#f1f5f9;color:#0f172a;border:1.5px solid #cbd5e1" onclick="tjFiltroPU('master')">Master</button>
+        <button class="btn bs" id="tj-pu-ambas" style="font-size:.72rem;padding:5px 10px;background:#f1f5f9;color:#0f172a;border:1.5px solid #cbd5e1" onclick="tjFiltroPU('ambas')">Ambas</button>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:#64748b;margin-bottom:12px">Consumos en un solo pago que entran en el resumen del mes actual.</p>
+    <div id="tj-unicos"></div>
+  </div>
+
+  <!-- Bloque: Cuotas activas -->
+  <div class="card">
+    <div class="sh">
+      <div class="st">📅 Cuotas activas</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn bs" id="tj-ca-visa" style="font-size:.72rem;padding:5px 10px;background:#1d4ed8;color:#fff;border:none" onclick="tjFiltroCA('visa')">Visa</button>
+        <button class="btn bs" id="tj-ca-master" style="font-size:.72rem;padding:5px 10px;background:#f1f5f9;color:#0f172a;border:1.5px solid #cbd5e1" onclick="tjFiltroCA('master')">Master</button>
+        <button class="btn bs" id="tj-ca-ambas" style="font-size:.72rem;padding:5px 10px;background:#f1f5f9;color:#0f172a;border:1.5px solid #cbd5e1" onclick="tjFiltroCA('ambas')">Ambas</button>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:#64748b;margin-bottom:12px">Compras en cuotas con pagos pendientes. Mostrando cuotas ya pagadas vs restantes.</p>
+    <div id="tj-cuotas"></div>
+  </div>
+
+  <!-- Bloque: Proyección -->
+  <div class="card">
+    <div class="sh"><div class="st">📊 Proyección mensual por tarjeta</div></div>
+    <p style="font-size:.78rem;color:#64748b;margin-bottom:12px">Cuánto te va a aparecer en cada tarjeta los próximos meses.</p>
+    <div id="tj-proy"></div>
   </div>
 </div>
 </div>
@@ -992,6 +1036,185 @@ function rNuevos(){
   </tr>`).join("")}</tbody></table></div>`;
 }
 
+// ── RENDER TARJETAS ───────────────────────────
+let tjFilPU="ambas";   // filtro pagos únicos
+let tjFilCA="ambas";   // filtro cuotas activas
+
+function tjFiltroPU(t){ tjFilPU=t; rTarjetas(); }
+function tjFiltroCA(t){ tjFilCA=t; rTarjetas(); }
+
+// Helper: devuelve los meses donde una cuota aplica
+// Dado un item con pi (período inicial) y c (cuotas totales), devuelve array de claves "YYYY-MM"
+function periodosDeCuota(g){
+  const out=[];
+  const [y,m]=g.pi.split("-").map(Number);
+  for(let i=0;i<g.c;i++){
+    let mm=m+i, yy=y+Math.floor((mm-1)/12);
+    mm=((mm-1)%12)+1;
+    out.push(`${yy}-${String(mm).padStart(2,"0")}`);
+  }
+  return out;
+}
+
+// Cuántas cuotas ya se pagaron (meses anteriores al período actual)
+function cuotasPagadas(g, hoyKey){
+  return periodosDeCuota(g).filter(k=>k<hoyKey).length;
+}
+
+function rTarjetas(){
+  const hoy=currentKey();
+  // ── Totales para resumen ──
+  let totVisaMes=0, totMasterMes=0;
+  let pendVisa=0, pendMaster=0;
+  nuevos.forEach(g=>{
+    const pers=periodosDeCuota(g);
+    // Lo que cae en el mes actual
+    if(pers.includes(hoy)){
+      if(g.tar==="visa") totVisaMes+=g.mpc;
+      else totMasterMes+=g.mpc;
+    }
+    // Cuotas pendientes (mes actual y futuros)
+    pers.forEach(k=>{
+      if(k>=hoy){
+        if(g.tar==="visa") pendVisa+=g.mpc;
+        else pendMaster+=g.mpc;
+      }
+    });
+  });
+
+  // Resumen cards
+  document.getElementById("tj-resumen").innerHTML=`
+    <div class="sc c-visa">
+      <h3>Visa · mes actual</h3>
+      <div class="am">${$p(totVisaMes)}</div>
+      <div class="sb">Pendiente total: ${$p(pendVisa)}</div>
+    </div>
+    <div class="sc c-master">
+      <h3>Master · mes actual</h3>
+      <div class="am">${$p(totMasterMes)}</div>
+      <div class="sb">Pendiente total: ${$p(pendMaster)}</div>
+    </div>
+  `;
+
+  // Estilos de botones de filtro
+  const mkBtn=(id,activo)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    const col= id.includes("visa") ? "#1d4ed8" : id.includes("master") ? "#b91c1c" : "#0f172a";
+    if(activo){
+      el.style.background=col; el.style.color="#fff"; el.style.border="none";
+    }else{
+      el.style.background="#f1f5f9"; el.style.color="#0f172a"; el.style.border="1.5px solid #cbd5e1";
+    }
+  };
+  mkBtn("tj-pu-visa", tjFilPU==="visa");
+  mkBtn("tj-pu-master", tjFilPU==="master");
+  mkBtn("tj-pu-ambas", tjFilPU==="ambas");
+  mkBtn("tj-ca-visa", tjFilCA==="visa");
+  mkBtn("tj-ca-master", tjFilCA==="master");
+  mkBtn("tj-ca-ambas", tjFilCA==="ambas");
+
+  // ── Bloque 1: Pagos únicos del mes actual ──
+  const unicos=nuevos.filter(g=>g.c===1 && g.pi===hoy)
+    .filter(g=> tjFilPU==="ambas" ? true : g.tar===tjFilPU);
+  const contU=document.getElementById("tj-unicos");
+  if(!unicos.length){
+    contU.innerHTML=`<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><p>Sin pagos únicos en ${perLabel(hoy)}.</p></div>`;
+  }else{
+    const totU=unicos.reduce((s,g)=>s+g.mpc,0);
+    contU.innerHTML=`<div class="tw"><table>
+      <thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th class="ar">Monto</th></tr></thead>
+      <tbody>${unicos.map(g=>`<tr>
+        <td>${g.d}</td>
+        <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+        <td>${g.fecha}</td>
+        <td class="ar"><strong>${$p(g.mpc)}</strong></td>
+      </tr>`).join("")}</tbody>
+      <tfoot><tr class="rtot"><td colspan="3"><strong>TOTAL</strong></td><td class="ar"><strong>${$p(totU)}</strong></td></tr></tfoot>
+    </table></div>`;
+  }
+
+  // ── Bloque 2: Cuotas activas ──
+  const cuotas=nuevos.filter(g=>g.c>1)
+    .filter(g=>{
+      const pers=periodosDeCuota(g);
+      return pers.some(k=>k>=hoy); // al menos una cuota pendiente
+    })
+    .filter(g=> tjFilCA==="ambas" ? true : g.tar===tjFilCA);
+  const contC=document.getElementById("tj-cuotas");
+  if(!cuotas.length){
+    contC.innerHTML=`<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><p>Sin cuotas activas.</p></div>`;
+  }else{
+    // Orden por último período (ultima cuota)
+    cuotas.sort((a,b)=>{
+      const aL=periodosDeCuota(a).slice(-1)[0];
+      const bL=periodosDeCuota(b).slice(-1)[0];
+      return aL.localeCompare(bL);
+    });
+    const totRest=cuotas.reduce((s,g)=>{
+      const pers=periodosDeCuota(g);
+      const restantes=pers.filter(k=>k>=hoy).length;
+      return s + restantes*g.mpc;
+    },0);
+    contC.innerHTML=`<div class="tw"><table>
+      <thead><tr><th>Descripción</th><th>Tarjeta</th><th>Progreso</th><th class="ar">$ / cuota</th><th class="ar">Restante</th><th>Última</th></tr></thead>
+      <tbody>${cuotas.map(g=>{
+        const pers=periodosDeCuota(g);
+        const pagadas=pers.filter(k=>k<hoy).length;
+        const restantes=g.c-pagadas;
+        const ultima=pers[pers.length-1];
+        const pct=(pagadas/g.c*100).toFixed(0);
+        return `<tr>
+          <td>${g.d}<div style="font-size:.7rem;color:#94a3b8;margin-top:1px">${g.fecha}</div></td>
+          <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="prog" style="width:70px"><div class="pf" style="width:${pct}%;background:${g.tar==="visa"?"#1d4ed8":"#b91c1c"}"></div></div>
+              <span style="font-size:.75rem;font-weight:700">${pagadas}/${g.c}</span>
+            </div>
+          </td>
+          <td class="ar">${$p(g.mpc)}</td>
+          <td class="ar"><strong style="color:#d97706">${$p(restantes*g.mpc)}</strong></td>
+          <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(ultima)}</span></td>
+        </tr>`;
+      }).join("")}</tbody>
+      <tfoot><tr class="rtot"><td colspan="4"><strong>TOTAL PENDIENTE</strong></td><td class="ar"><strong>${$p(totRest)}</strong></td><td></td></tr></tfoot>
+    </table></div>`;
+  }
+
+  // ── Bloque 3: Proyección mensual por tarjeta ──
+  const mesesProy=6;
+  const proy=[];
+  for(let i=0;i<mesesProy;i++){
+    const [y,m]=hoy.split("-").map(Number);
+    let mm=m+i, yy=y+Math.floor((mm-1)/12);
+    mm=((mm-1)%12)+1;
+    const k=`${yy}-${String(mm).padStart(2,"0")}`;
+    let v=0, ms=0;
+    nuevos.forEach(g=>{
+      const pers=periodosDeCuota(g);
+      if(pers.includes(k)){
+        if(g.tar==="visa") v+=g.mpc;
+        else ms+=g.mpc;
+      }
+    });
+    proy.push({k,v,ms,t:v+ms});
+  }
+  const contP=document.getElementById("tj-proy");
+  contP.innerHTML=`<div class="tw"><table>
+    <thead><tr><th>Período</th><th class="ar" style="color:#1d4ed8">Visa</th><th class="ar" style="color:#b91c1c">Master</th><th class="ar">Total</th></tr></thead>
+    <tbody>${proy.map((p,i)=>{
+      const isCur=p.k===hoy;
+      return `<tr class="${isCur?"rcur":""}">
+        <td><strong>${perLabel(p.k)}</strong>${isCur?` <span class="vchip">HOY</span>`:""}</td>
+        <td class="ar" style="color:#1d4ed8">${p.v>0?$p(p.v):'<span style="color:#cbd5e1">—</span>'}</td>
+        <td class="ar" style="color:#b91c1c">${p.ms>0?$p(p.ms):'<span style="color:#cbd5e1">—</span>'}</td>
+        <td class="ar"><strong>${p.t>0?$p(p.t):'—'}</strong></td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table></div>`;
+}
+
 // ── CHART ─────────────────────────────────────
 let ch=null;
 function rChart(){
@@ -1053,9 +1276,9 @@ function saveGasto(){
   const c=parseInt(document.getElementById("g-cuotas").value)||1;
   if(!d||!fecha||!monto){alert("Completá todos los campos.");return;}
   nuevos.push({d,tar,fecha,pi:calcPer(fecha,tar),c,mpc:monto/c});
-  sv("ng",nuevos);closeOv("ov-gasto");rNuevos();rProy();rChart();
+  sv("ng",nuevos);closeOv("ov-gasto");rNuevos();rProy();rChart();rTarjetas();
 }
-function delNuevo(i){if(confirm("¿Eliminar?")){nuevos.splice(i,1);sv("ng",nuevos);rNuevos();rProy();rChart();}}
+function delNuevo(i){if(confirm("¿Eliminar?")){nuevos.splice(i,1);sv("ng",nuevos);rNuevos();rProy();rChart();rTarjetas();}}
 
 function openModalFijo(i=-1){
   document.getElementById("f-idx").value=i;
@@ -1214,7 +1437,7 @@ async function fetchGmail(){
   }
 }
 function resetFijos(){if(confirm("¿Restablecer gastos fijos?")){fijos=JSON.parse(JSON.stringify(DEF_FIJOS));sv("gf",fijos);rFijos();rInicio();rProy();rChart();}}
-function resetNuevos(){if(confirm("¿Eliminar todos los nuevos gastos?")){nuevos=[];sv("ng",nuevos);rNuevos();rProy();rChart();}}
+function resetNuevos(){if(confirm("¿Eliminar todos los nuevos gastos?")){nuevos=[];sv("ng",nuevos);rNuevos();rProy();rChart();rTarjetas();}}
 
 // ── GMAIL IMPORT ──────────────────────────────
 let gmailPending = []; // consumos parseados pendientes de confirmar
@@ -1307,7 +1530,7 @@ function importarTodo(){
   sv("gh", gmailHist);
   gmailPending=[];
   volverPaso1();
-  rNuevos(); rProy(); rChart(); rGmailHist(); rGmailStats();
+  rNuevos(); rProy(); rChart(); rTarjetas(); rGmailHist(); rGmailStats();
   // mostrar confirmación
   const p2 = document.getElementById("gmail-paso2");
   p2.style.display="none";
@@ -1365,6 +1588,7 @@ function initApp(){
       document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
       document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id===`panel-${n}`));
       if(n==="inicio") safe(rChart,"rChart");
+      if(n==="tarjetas") safe(rTarjetas,"rTarjetas");
     });
   });
 
@@ -1376,6 +1600,7 @@ function initApp(){
   safe(rVisa,"rVisa");
   safe(rCuotas,"rCuotas");
   safe(rNuevos,"rNuevos");
+  safe(rTarjetas,"rTarjetas");
   safe(loadCfg,"loadCfg");
   safe(rChart,"rChart");
   safe(rGmailHist,"rGmailHist");
