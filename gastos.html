@@ -6,7 +6,7 @@
 <title>Gestión de Gastos — Campiti</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f2748">
+<meta name="theme-color" content="#14305E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,16 +15,21 @@
 <link rel="icon" type="image/png" href="icon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+:root{
+  --azul:#1D4ED8;--azul-2:#2F6BE8;--azul-osc:#14305E;--azul-cl:#EAF1FD;
+  --gris:#64748B;--gris-2:#94A3B8;--gris-cl:#F1F4F8;--borde:#E2E8F0;--tinta:#0F172A;--tinta-2:#334155;
+  --verde:#8CC63F;--verde-osc:#4E7F17;--verde-cl:#F1F8E6;--rojo:#DC2626;--blanco:#FFFFFF;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#eef2f7;color:#1e293b;min-height:100vh}
-.header{background:linear-gradient(135deg,#0f2748,#1e4d8c);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gris-cl);color:var(--tinta);min-height:100vh}
+.header{background:var(--azul-osc);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,.3)}
 .header h1{font-size:1.2rem;font-weight:800}.header p{font-size:.78rem;opacity:.7;margin-top:2px}
-.btn-header{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700}
-.btn-header:hover{background:rgba(255,255,255,.25)}
+.btn-header{background:var(--verde);border:none;color:var(--azul-osc);padding:9px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700}
+.btn-header:hover{filter:brightness(1.05)}
 .tabs{background:#fff;border-bottom:2px solid #e2e8f0;display:flex;overflow-x:auto;padding:0 8px;gap:2px}
 .tab{padding:12px 14px;cursor:pointer;font-size:.82rem;font-weight:600;color:#64748b;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;margin-bottom:-2px}
-.tab:hover{color:#1e4d8c;background:#f8faff}
-.tab.active{color:#1e4d8c;border-bottom-color:#1e4d8c;background:#f0f5ff}
+.tab:hover{color:var(--azul);background:var(--azul-cl)}
+.tab.active{color:var(--azul-osc);border-bottom-color:var(--verde);background:#fff}
 .tab-panel{display:none}.tab-panel.active{display:block}
 .container{max-width:1180px;margin:0 auto;padding:20px 16px}
 .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);margin-bottom:18px}
@@ -35,10 +40,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sc h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:8px}
 .sc .am{font-size:1.35rem;font-weight:800;line-height:1.1}
 .sc .sb{font-size:.7rem;opacity:.72;margin-top:4px}
-.c-fijos{background:linear-gradient(135deg,#0891b2,#22d3ee)}
-.c-ing{background:linear-gradient(135deg,#047857,#34d399)}
-.c-visa{background:linear-gradient(135deg,#1d4ed8,#60a5fa)}
-.c-master{background:linear-gradient(135deg,#b91c1c,#f87171)}
+.c-fijos{background:#64748B}
+.c-ing{background:#4E7F17}
+.c-visa{background:var(--azul)}
+.c-master{background:var(--azul-osc)}
 .c-pos{background:linear-gradient(135deg,#065f46,#10b981)}
 .c-neg{background:linear-gradient(135deg,#7f1d1d,#ef4444)}
 /* Alerts */
@@ -64,13 +69,13 @@ tr:hover td{background:#fafbff}
 /* Badges */
 .badge{display:inline-block;padding:2px 8px;border-radius:16px;font-size:.7rem;font-weight:700}
 .bv{background:#dbeafe;color:#1e40af}
-.bm{background:#fee2e2;color:#991b1b}
+.bm{background:#E2E8F0;color:#14305E}
 .bc{background:#fef9c3;color:#78350f}
 .bp2{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:3px 9px;border-radius:16px;font-size:.7rem;font-weight:700}
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:8px;border:none;cursor:pointer;font-size:.84rem;font-weight:700;transition:all .2s}
-.bp{background:#1e4d8c;color:#fff}.bp:hover{background:#163d72}
-.bo{background:#fff;color:#1e4d8c;border:1.5px solid #1e4d8c}.bo:hover{background:#f0f5ff}
+.bp{background:var(--azul);color:#fff}.bp:hover{background:var(--azul-osc)}
+.bo{background:#fff;color:var(--azul);border:1.5px solid var(--azul)}.bo:hover{background:var(--azul-cl)}
 .bs{padding:5px 10px;font-size:.77rem;border-radius:6px}
 .bi{background:none;border:none;cursor:pointer;padding:4px 7px;border-radius:6px;font-size:.95rem;transition:background .15s}
 .bi:hover{background:#f1f5f9}
@@ -274,6 +279,55 @@ tr:hover td{background:#fafbff}
   /* Vacíos */
   .empty{padding:24px 16px}
 }
+
+/* ── INICIO (rediseño) ───────────────────────── */
+.ini{max-width:880px}
+.hero{background:var(--azul-osc);color:#fff;border-radius:18px;padding:20px 20px 18px;margin-bottom:14px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(140,198,63,.16)}
+.hero .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:#C7D6F2;font-weight:700}
+.hero .fecha{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px}
+.hero .fecha b{font-size:1.15rem}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:800}
+.chip-v{background:var(--verde);color:var(--azul-osc)}
+.chip-g{background:rgba(255,255,255,.14);color:#fff}
+.hero .total{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:12px 0 2px;font-variant-numeric:tabular-nums}
+.hero .usd{font-size:.92rem;color:#D9F0BC;font-weight:700}
+.hero .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;position:relative;z-index:1}
+.hero .split>div{background:rgba(255,255,255,.08);border-radius:12px;padding:10px 12px}
+.hero .split small{display:block;font-size:.68rem;color:#C7D6F2;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.hero .split strong{font-size:1.05rem;font-variant-numeric:tabular-nums}
+.hero .nota{font-size:.75rem;color:#C7D6F2;margin-top:12px;position:relative;z-index:1}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.box{background:#fff;border-radius:16px;padding:16px 18px;border:1px solid var(--borde)}
+.box h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.box .big{font-size:1.6rem;font-weight:800;color:var(--tinta);font-variant-numeric:tabular-nums}
+.box .sub{font-size:.8rem;color:var(--gris);margin-top:4px;line-height:1.45}
+.box.usd{border-left:5px solid var(--verde)}
+.paso{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:.82rem;color:var(--tinta-2);line-height:1.45}
+.paso .n{flex:0 0 22px;height:22px;border-radius:50%;background:var(--verde-cl);color:var(--verde-osc);font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center}
+.lst{list-style:none;margin-top:8px}
+.lst li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--gris-cl);font-size:.84rem}
+.lst li:first-child{border-top:none}
+.lst .d{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tinta)}
+.lst .d small{display:block;color:var(--gris-2);font-size:.7rem;margin-top:1px}
+.lst .m{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.barra{height:10px;border-radius:6px;background:var(--gris-cl);overflow:hidden;display:flex;gap:2px;margin:12px 0 8px}
+.barra span{display:block;height:100%}
+.ley{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.74rem;color:var(--tinta-2)}
+.ley i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.pos,.box .big.pos{color:var(--verde-osc)}.neg,.box .big.neg{color:var(--rojo)}
+.tag{font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--azul-cl);color:var(--azul)}
+.tag.m{background:var(--gris-cl);color:var(--tinta-2)}
+.tag.u{background:var(--verde-cl);color:var(--verde-osc)}
+.lnk{background:none;border:none;color:var(--azul);font-weight:700;font-size:.78rem;cursor:pointer;padding:0}
+.aviso{background:var(--verde-cl);border:1px solid #CFE6AE;color:#2F4F0B;border-radius:14px;padding:12px 14px;font-size:.83rem;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;line-height:1.45}
+.aviso button{margin-left:auto;background:none;border:none;font-size:1rem;cursor:pointer;color:#2F4F0B}
+@media(max-width:640px){
+  .g2{grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+  .hero{border-radius:16px;padding:16px}
+  .hero .total{font-size:1.75rem}
+  .box{padding:14px}
+}
 </style>
 </head>
 <body>
@@ -289,8 +343,6 @@ tr:hover td{background:#fafbff}
   <div class="tab" data-tab="ingresos">💰 Ingresos</div>
   <div class="tab" data-tab="fijos">📋 Fijos</div>
   <div class="tab" data-tab="tarjetas">💳 Tarjetas</div>
-  <div class="tab" data-tab="visa">💳 Visa</div>
-  <div class="tab" data-tab="master">💳 Master</div>
   <div class="tab" data-tab="gmail">📧 Gmail</div>
   <div class="tab" data-tab="nuevos">➕ Nuevos</div>
   <div class="tab" data-tab="config">⚙️ Config</div>
@@ -298,24 +350,20 @@ tr:hover td{background:#fafbff}
 
 <!-- INICIO -->
 <div class="tab-panel active" id="panel-inicio">
-<div class="container">
-  <div class="sg" id="sg"></div>
-  <div class="alert aw" id="alerta-vto">
-    ⚠️ <span id="alerta-vto-txt"></span>
+<div class="container ini">
+  <div id="ini-aviso"></div>
+  <div id="ini-hero"></div>
+  <div class="g2">
+    <div class="box usd" id="ini-usd"></div>
+    <div class="box" id="ini-disp"></div>
   </div>
-  <div class="card">
-    <div class="sh">
-      <div class="st">Cuotas Visa proyectadas</div>
-      <span class="bp2">📧 Gmail — Fase 2</span>
-    </div>
+  <div class="g2">
+    <div class="box" id="ini-cuotas"></div>
+    <div class="box" id="ini-consumos"></div>
+  </div>
+  <div class="box" style="margin-bottom:14px">
+    <h4>Próximos 6 resúmenes</h4>
     <div class="cw"><canvas id="chartMain"></canvas></div>
-  </div>
-  <div class="card">
-    <div class="sh"><div class="st" id="tit-cuotas">Cuotas activas — Visa</div></div>
-    <div class="tw">
-      <table><thead><tr><th>Descripción</th><th>Cuota</th><th class="ar">$ / cuota</th><th>Restan</th><th class="ar">Pendiente</th></tr></thead>
-      <tbody id="tb-cuotas"></tbody></table>
-    </div>
   </div>
 </div>
 </div>
@@ -326,10 +374,9 @@ tr:hover td{background:#fafbff}
   <div class="card">
     <div class="sh">
       <div class="st">Proyección mensual</div>
-      <span class="bp2">📧 Gmail — Fase 2</span>
     </div>
     <div class="alert ai">
-      💡 Los ingresos se toman del total cargado en la pestaña <strong>💰 Ingresos</strong>. El disponible = Ingresos − Egresos del mes.
+      💡 Cada fila es un resumen de tarjeta. Disponible = Ingresos − (Fijos + Visa + Mastercard). Los dólares van aparte. * = fecha de vencimiento estimada.
     </div>
     <div class="tw">
       <table>
@@ -337,9 +384,9 @@ tr:hover td{background:#fafbff}
           <th>Período</th><th>Vto.</th>
           <th class="ar">Ingresos</th>
           <th class="ar">Gastos Fijos</th>
-          <th class="ar">Cuotas Visa</th>
+          <th class="ar">Visa</th>
           <th class="ar">Mastercard</th>
-          <th class="ar">Nuevos</th>
+          <th class="ar">De eso, nuevos</th>
           <th class="ar">Total Egresos</th>
           <th class="ar">Disponible</th>
         </tr></thead>
@@ -446,42 +493,6 @@ tr:hover td{background:#fafbff}
 </div>
 </div>
 
-<!-- VISA -->
-<div class="tab-panel" id="panel-visa">
-<div class="container">
-  <div class="ic">
-    <div class="icd" style="border-left-color:#1d4ed8"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Saldo actual</div><div style="font-size:1.35rem;font-weight:800;color:#1d4ed8;margin-top:4px">$1.933.662,20</div><div style="font-size:.74rem;color:#64748b">+ U$S 33,46</div></div>
-    <div class="icd" style="border-left-color:#f59e0b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Vencimiento</div><div style="font-size:1.35rem;font-weight:800;color:#d97706;margin-top:4px">09 Abr 2026</div><div style="font-size:.74rem;color:#64748b">Cierre: 26 Mar · Próx: 30 Abr</div></div>
-    <div class="icd" style="border-left-color:#10b981"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Pago mínimo</div><div style="font-size:1.35rem;font-weight:800;color:#065f46;margin-top:4px">$264.340</div><div style="font-size:.74rem;color:#dc2626;font-weight:600">Recomendado: pago total</div></div>
-    <div class="icd" style="border-left-color:#6366f1"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Cierre día</div><div style="font-size:1.35rem;font-weight:800;color:#4338ca;margin-top:4px" id="lbl-visa-dia">Día 26</div><div style="font-size:.74rem;color:#64748b">Configurable en ⚙️</div></div>
-  </div>
-  <div class="card">
-    <div class="sh"><div class="st">Consumos — Visa Signature</div><span class="badge bv">Cuenta 1243589947</span></div>
-    <div class="tw"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Cuotas</th><th class="ar">Monto</th></tr></thead><tbody id="tb-visa"></tbody></table></div>
-  </div>
-</div>
-</div>
-
-<!-- MASTERCARD -->
-<div class="tab-panel" id="panel-master">
-<div class="container">
-  <div class="ic">
-    <div class="icd" style="border-left-color:#ef4444"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Saldo actual</div><div style="font-size:1.35rem;font-weight:800;color:#b91c1c;margin-top:4px">$15.554,54</div><div style="font-size:.74rem;color:#64748b">Sin dólares</div></div>
-    <div class="icd" style="border-left-color:#f59e0b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Vencimiento</div><div style="font-size:1.35rem;font-weight:800;color:#d97706;margin-top:4px">09 Abr 2026</div><div style="font-size:.74rem;color:#64748b">Cierre: 26 Mar · Próx: 30 Abr</div></div>
-    <div class="icd" style="border-left-color:#10b981"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Pago mínimo</div><div style="font-size:1.35rem;font-weight:800;color:#065f46;margin-top:4px">$793</div><div style="font-size:.74rem;color:#dc2626;font-weight:600">Recomendado: pago total</div></div>
-    <div class="icd" style="border-left-color:#64748b"><div style="font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase">Cierre día</div><div style="font-size:1.35rem;font-weight:800;color:#475569;margin-top:4px" id="lbl-mc-dia">Día 26</div><div style="font-size:.74rem;color:#64748b">Configurable en ⚙️</div></div>
-  </div>
-  <div class="card">
-    <div class="sh"><div class="st">Consumos — Mastercard Black</div><span class="badge bm">Cuenta 1273063422</span></div>
-    <div class="tw"><table><thead><tr><th>Fecha</th><th>Descripción</th><th class="ar">Monto</th></tr></thead>
-    <tbody><tr><td>08-Mar-26</td><td>DLO*PEDIDOSYA SALV</td><td class="ar">$15.539,00</td></tr>
-    <tr class="rtot"><td colspan="2"><strong>Total consumos</strong></td><td class="ar"><strong>$15.539,00</strong></td></tr></tbody>
-    </table></div>
-    <div class="alert as" style="margin-top:14px">✅ <span>Sin cuotas pendientes.</span></div>
-  </div>
-</div>
-</div>
-
 <!-- GMAIL -->
 <div class="tab-panel" id="panel-gmail">
 <div class="container">
@@ -577,7 +588,7 @@ tr:hover td{background:#fafbff}
 <!-- NUEVOS -->
 <div class="tab-panel" id="panel-nuevos">
 <div class="container">
-  <div class="alert ai">📧 <span><strong>Fase 2 — Gmail:</strong> Los consumos del Banco Francés llegarán automáticamente. Por ahora cargalos manualmente. El período se asigna según la fecha de cierre de cada tarjeta.</span></div>
+  <div class="alert ai">📋 <span>Todo lo que impacta desde el cierre del 1 de octubre: las cuotas que venías arrastrando (<strong>📄 Resumen</strong>), lo que entra por Gmail y lo que cargás a mano. Tocá ✏️ para corregir las cuotas de una compra.</span></div>
   <div class="card">
     <div class="sh"><div class="st">Nuevos gastos</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bo" id="btn-dups" onclick="toggleDups()">🔍 Buscar duplicados</button><button class="btn bp" onclick="openModalGasto()">＋ Agregar</button></div></div>
     <div id="cont-dups"></div>
@@ -590,9 +601,11 @@ tr:hover td{background:#fafbff}
 <div class="tab-panel" id="panel-config">
 <div class="container">
   <div class="card">
-    <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">📅 Fechas de cierre</div>
-    <div class="cr"><div class="cl">Día cierre Visa<small>Compras hasta este día caen en el resumen del mismo mes</small></div><input type="number" class="ci" id="cfg-visa" min="1" max="31" value="26" onchange="saveConfig()"></div>
-    <div class="cr"><div class="cl">Día cierre Mastercard</div><input type="number" class="ci" id="cfg-mc" min="1" max="31" value="26" onchange="saveConfig()"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:6px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">📅 Cierre y vencimiento</div>
+    <p style="font-size:.78rem;color:#64748b;margin:8px 0 4px">Visa y Mastercard de BBVA cierran y vencen el mismo día. Cuando te llegue el resumen, actualizá las fechas del próximo para que todo se calcule exacto.</p>
+    <div id="cfg-fechas"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin:18px 0 6px;padding-top:16px;border-top:2px solid #e2e8f0">💵 Dólar</div>
+    <div class="cr"><div class="cl">Cotización para estimar en pesos<small>La usa el bloque de dólares de Inicio (el resumen de octubre convirtió a $1.517)</small></div><input type="number" class="ci" style="width:110px" id="cfg-usd" min="1" step="1" onchange="saveConfig()"></div>
     <div style="font-size:.95rem;font-weight:700;color:#0f172a;margin:18px 0 12px;padding-top:16px;border-top:2px solid #e2e8f0">📧 Conexión Gmail</div>
     <div class="cr" style="flex-wrap:wrap;gap:8px;align-items:flex-start">
       <div class="cl" style="min-width:160px">URL Apps Script<small>Pegá la URL del script desplegado en script.google.com</small></div>
@@ -606,8 +619,8 @@ tr:hover td{background:#fafbff}
       <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" onclick="resetFijos()">Restablecer</button>
     </div>
     <div class="cr">
-      <div class="cl">Limpiar nuevos gastos</div>
-      <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" onclick="resetNuevos()">Limpiar</button>
+      <div class="cl">Borrar gastos cargados<small>Deja solo las cuotas que venían del resumen</small></div>
+      <button class="btn bs" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca" onclick="resetNuevos()">Borrar</button>
     </div>
   </div>
 </div>
@@ -616,13 +629,15 @@ tr:hover td{background:#fafbff}
 <!-- MODAL: Nuevo gasto -->
 <div class="overlay" id="ov-gasto" onclick="hovc(event,'ov-gasto')">
   <div class="modal">
-    <h2>💳 Registrar nuevo gasto</h2>
+    <h2 id="tit-gasto">💳 Registrar nuevo gasto</h2>
     <div class="fr"><label>Descripción</label><input type="text" id="g-desc" placeholder="Ej: MERCADO LIBRE"></div>
     <div class="fr"><label>Tarjeta</label><select id="g-tar" onchange="updPer()"><option value="visa">Visa Signature</option><option value="master">Mastercard Black</option></select></div>
     <div class="fr"><label>Fecha del consumo</label><input type="date" id="g-fecha" onchange="updPer()"></div>
-    <div class="fr"><label>Monto total ($)</label><input type="number" id="g-monto" placeholder="0" step="1" oninput="updCuota()"></div>
+    <div class="fr"><label>Moneda</label><select id="g-mon" onchange="updCuota()"><option value="ARS">Pesos ($)</option><option value="USD">Dólares (U$S)</option></select></div>
+    <div class="fr"><label>Monto total</label><input type="number" id="g-monto" placeholder="0" step="0.01" oninput="updCuota()"></div>
     <div class="fr"><label>Cuotas</label><input type="number" id="g-cuotas" value="1" min="1" max="48" oninput="updCuota()"><div class="fh" id="g-cprev">Ingresá el monto.</div></div>
     <div class="fh ok" id="g-pprev" style="padding:9px;background:#f0fdf4;border-radius:8px;margin-top:2px"></div>
+    <input type="hidden" id="g-idx" value="-1">
     <div class="ma"><button class="btn bp" onclick="saveGasto()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-gasto')" style="flex:1">Cancelar</button></div>
   </div>
 </div>
@@ -694,82 +709,75 @@ const DEF_FIJOS=[
   {n:"Alejandra",m:500000},{n:"Psico",m:140000},{n:"Cochera",m:95000}
 ];
 
-const VISA_TXS=[
-  {f:"01-Dic-24",d:"MERPAGO*HIDROLIT",c:16,t:18,m:9166.66,mo:"$"},
-  {f:"29-Sep-25",d:"G P V SOCIEDAD ANONIMA",c:6,t:9,m:96604.44,mo:"$"},
-  {f:"18-Oct-25",d:"NSS*NO ME OLVIDES",c:6,t:6,m:26583.33,mo:"$"},
-  {f:"18-Oct-25",d:"PRUNE - ALTO ROSARIO",c:6,t:6,m:30800.00,mo:"$"},
-  {f:"15-Dic-25",d:"ONCITY.COM",c:4,t:6,m:79999.63,mo:"$"},
-  {f:"22-Dic-25",d:"DLO*HUDSON COCINA",c:4,t:9,m:18843.55,mo:"$"},
-  {f:"07-Ene-26",d:"DLO*HUDSON COCINA",c:3,t:12,m:16774.01,mo:"$"},
-  {f:"29-Ene-26",d:"SPORT DAY SA",c:2,t:3,m:13333.00,mo:"$"},
-  {f:"26-Feb-26",d:"MERPAGO*KIOSCOEBER",c:null,t:null,m:11275.00,mo:"$"},
-  {f:"26-Feb-26",d:"MERPAGO*MELI",c:null,t:null,m:3490.00,mo:"$"},
-  {f:"26-Feb-26",d:"MERPAGO*COTO",c:null,t:null,m:3000.00,mo:"$"},
-  {f:"26-Feb-26",d:"SAO PINAMAR",c:null,t:null,m:14400.00,mo:"$"},
-  {f:"01-Mar-26",d:"GOOGLE *Workspace",c:null,t:null,m:5.88,mo:"U$S"},
-  {f:"01-Mar-26",d:"NETFLIX.COM",c:null,t:null,m:14.33,mo:"U$S"},
-  {f:"02-Mar-26",d:"MERPAGO*KELEDICIONES",c:null,t:null,m:42865.00,mo:"$"},
-  {f:"03-Mar-26",d:"MERPAGO*GARDENLIFE",c:null,t:null,m:59998.00,mo:"$"},
-  {f:"03-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:6108.00,mo:"$"},
-  {f:"05-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:34166.70,mo:"$"},
-  {f:"05-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:37000.00,mo:"$"},
-  {f:"05-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:8567.00,mo:"$"},
-  {f:"05-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3038.00,mo:"$"},
-  {f:"06-Mar-26",d:"GOOGLE *YouTube Premium",c:null,t:null,m:4.90,mo:"U$S"},
-  {f:"07-Mar-26",d:"ROBERTO CALZAVARA SRL",c:null,t:null,m:174977.85,mo:"$"},
-  {f:"07-Mar-26",d:"RAPIBAT",c:null,t:null,m:193700.00,mo:"$"},
-  {f:"07-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:4424.00,mo:"$"},
-  {f:"07-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3114.00,mo:"$"},
-  {f:"08-Mar-26",d:"PLAN OVALO SA",c:null,t:null,m:578114.11,mo:"$"},
-  {f:"08-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2603.00,mo:"$"},
-  {f:"08-Mar-26",d:"Spotify",c:null,t:null,m:2.35,mo:"U$S"},
-  {f:"09-Mar-26",d:"FEDERACION PATRONAL",c:null,t:null,m:22337.00,mo:"$"},
-  {f:"10-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2518.00,mo:"$"},
-  {f:"13-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3129.00,mo:"$"},
-  {f:"13-Mar-26",d:"EPE SANTA FE",c:null,t:null,m:14450.19,mo:"$"},
-  {f:"13-Mar-26",d:"EPE SANTA FE",c:null,t:null,m:36875.44,mo:"$"},
-  {f:"13-Mar-26",d:"ULTRAFIBRA",c:null,t:null,m:34950.00,mo:"$"},
-  {f:"14-Mar-26",d:"YPF OPECOM PLAYA",c:null,t:null,m:49362.00,mo:"$"},
-  {f:"15-Mar-26",d:"AFIP VEP 1600266070",c:null,t:null,m:38286.11,mo:"$"},
-  {f:"15-Mar-26",d:"AFIP VEP 1600266214",c:null,t:null,m:37265.97,mo:"$"},
-  {f:"15-Mar-26",d:"AFIP VEP 1600266455",c:null,t:null,m:37095.95,mo:"$"},
-  {f:"16-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3262.00,mo:"$"},
-  {f:"16-Mar-26",d:"SAMSHOP.COM",c:1,t:12,m:55833.25,mo:"$"},
-  {f:"17-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2566.00,mo:"$"},
-  {f:"18-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2607.00,mo:"$"},
-  {f:"20-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:2818.00,mo:"$"},
-  {f:"22-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:8243.00,mo:"$"},
-  {f:"22-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:6196.00,mo:"$"},
-  {f:"24-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3180.00,mo:"$"},
-  {f:"24-Mar-26",d:"OPENAI *ChatGPT",c:null,t:null,m:6.00,mo:"U$S"},
-  {f:"25-Mar-26",d:"MERPAGO*MAURICIO",c:1,t:6,m:21666.70,mo:"$"},
-  {f:"25-Mar-26",d:"GRAELLS NELSON",c:1,t:6,m:34500.00,mo:"$"},
-  {f:"25-Mar-26",d:"GRAELLS NELSON",c:1,t:3,m:10666.68,mo:"$"},
-  {f:"25-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:4983.00,mo:"$"},
-  {f:"25-Mar-26",d:"PAYU*AR*UBER",c:null,t:null,m:3047.00,mo:"$"},
-];
-
-const BBVA=[
-  {per:"Mar 26",vto:"09 Abr",key:"2026-03",visa:1933662.20,mc:15554.54,cur:true},
-  {per:"Abr 26",vto:"~08 May",key:"2026-04",visa:383387.86,mc:0},
-  {per:"May 26",vto:"~08 Jun",key:"2026-05",visa:370054.86,mc:0},
-  {per:"Jun 26",vto:"~08 Jul",key:"2026-06",visa:184284.13,mc:0},
-  {per:"Jul 26",vto:"~08 Ago",key:"2026-07",visa:184284.13,mc:0},
-  {per:"Ago 26",vto:"~08 Sep",key:"2026-08",visa:184284.13,mc:0},
-  {per:"Sep 26",vto:"~08 Oct",key:"2026-09",visa:72607.26,mc:0},
-  {per:"Oct 26",vto:"~08 Nov",key:"2026-10",visa:72607.26,mc:0},
-  {per:"Nov 26",vto:"~08 Dic",key:"2026-11",visa:72607.26,mc:0},
-  {per:"Dic 26",vto:"~08 Ene",key:"2026-12",visa:72607.26,mc:0},
-  {per:"Ene 27",vto:"~08 Feb",key:"2027-01",visa:55833.25,mc:0},
-  {per:"Feb 27",vto:"~08 Mar",key:"2027-02",visa:55833.25,mc:0},
-];
+// ── PUNTO DE PARTIDA (resúmenes BBVA con cierre 01-Oct-26) ──
+const ARRANQUE_VER="2026-10-01";
+const INICIO="2026-10-01";
+// Compras en cuotas que siguen activas (cuota que vino en el resumen de septiembre → sigue hacia adelante)
+const ARRASTRE=[{"d": "DLO*HUDSON COCINA", "tar": "visa", "fecha": "2026-01-07", "pi": "2026-01", "c": 12, "mpc": 16774.01},
+  {"d": "SAMSHOP.COM", "tar": "visa", "fecha": "2026-03-16", "pi": "2026-03", "c": 12, "mpc": 55833.25},
+  {"d": "DLO*Ganga Home", "tar": "visa", "fecha": "2026-04-20", "pi": "2026-04", "c": 12, "mpc": 32896.92},
+  {"d": "MERPAGO*HGHERMANOSSA", "tar": "visa", "fecha": "2026-04-29", "pi": "2026-05", "c": 6, "mpc": 33449.69},
+  {"d": "MERPAGO*GANGAHOME", "tar": "visa", "fecha": "2026-05-10", "pi": "2026-05", "c": 6, "mpc": 28506.11},
+  {"d": "DLO*KREATEX", "tar": "visa", "fecha": "2026-05-10", "pi": "2026-05", "c": 6, "mpc": 24481.87},
+  {"d": "ONCITY.COM", "tar": "visa", "fecha": "2026-05-10", "pi": "2026-05", "c": 12, "mpc": 28349.91},
+  {"d": "DLO*JOMA ARGENTINA", "tar": "visa", "fecha": "2026-05-11", "pi": "2026-05", "c": 6, "mpc": 28441.66},
+  {"d": "DLO*TIENDA IU", "tar": "visa", "fecha": "2026-05-11", "pi": "2026-05", "c": 6, "mpc": 19581.66},
+  {"d": "PARFUMERIE", "tar": "visa", "fecha": "2026-05-11", "pi": "2026-05", "c": 6, "mpc": 8816.66},
+  {"d": "WWW.JULERIAQUE.COM.AR", "tar": "visa", "fecha": "2026-05-14", "pi": "2026-05", "c": 12, "mpc": 39489.27},
+  {"d": "WWW.JULERIAQUE.COM.AR", "tar": "visa", "fecha": "2026-05-14", "pi": "2026-05", "c": 12, "mpc": 39489.35},
+  {"d": "UA ARGENTINA S.A.", "tar": "visa", "fecha": "2026-05-14", "pi": "2026-05", "c": 6, "mpc": 12666.53},
+  {"d": "MERPAGO*PUMASPORTSARGENTI", "tar": "visa", "fecha": "2026-05-17", "pi": "2026-05", "c": 9, "mpc": 24444.22},
+  {"d": "MERPAGO*WEBVANS", "tar": "visa", "fecha": "2026-05-17", "pi": "2026-05", "c": 9, "mpc": 34322.22},
+  {"d": "MERPAGO*CRUXES", "tar": "visa", "fecha": "2026-05-18", "pi": "2026-05", "c": 6, "mpc": 22368.33},
+  {"d": "MERPAGO*JOMAARG", "tar": "visa", "fecha": "2026-05-21", "pi": "2026-05", "c": 6, "mpc": 29483.33},
+  {"d": "LA MARTINA", "tar": "visa", "fecha": "2026-05-25", "pi": "2026-05", "c": 6, "mpc": 34434.33},
+  {"d": "DLO*Muluc Patagonia", "tar": "visa", "fecha": "2026-07-02", "pi": "2026-07", "c": 6, "mpc": 61000.0},
+  {"d": "GRAELLS NELSON", "tar": "visa", "fecha": "2026-07-17", "pi": "2026-07", "c": 6, "mpc": 60000.0},
+  {"d": "CETROGAR SA", "tar": "visa", "fecha": "2026-07-17", "pi": "2026-07", "c": 12, "mpc": 29166.58},
+  {"d": "GRAELLS NELSON", "tar": "visa", "fecha": "2026-07-18", "pi": "2026-07", "c": 6, "mpc": 20816.66},
+  {"d": "LACOSTE ALTO ROSARIO", "tar": "visa", "fecha": "2026-07-25", "pi": "2026-08", "c": 3, "mpc": 67666.66},
+  {"d": "PINTURERIAS REX", "tar": "visa", "fecha": "2026-07-25", "pi": "2026-07", "c": 12, "mpc": 5869.58},
+  {"d": "DLO*GAFAS", "tar": "visa", "fecha": "2026-08-04", "pi": "2026-08", "c": 3, "mpc": 31973.33},
+  {"d": "MERPAGO*JUSTBIKE", "tar": "visa", "fecha": "2026-08-06", "pi": "2026-08", "c": 9, "mpc": 63458.23},
+  {"d": "CABA INNOVACIONES", "tar": "visa", "fecha": "2026-08-18", "pi": "2026-08", "c": 12, "mpc": 8037.41},
+  {"d": "DLO*Joma Argentina", "tar": "visa", "fecha": "2026-08-19", "pi": "2026-08", "c": 6, "mpc": 22019.67},
+  {"d": "DLO*Infinito desarroll", "tar": "visa", "fecha": "2026-09-09", "pi": "2026-09", "c": 3, "mpc": 55991.5},
+  {"d": "WWWFRAVEGACOMCAC", "tar": "visa", "fecha": "2026-09-22", "pi": "2026-09", "c": 3, "mpc": 49999.68},
+  {"d": "GRAELLS NELSON", "tar": "visa", "fecha": "2026-09-30", "pi": "2026-09", "c": 3, "mpc": 28333.34},
+  {"d": "DLO*Muluc Patagonia", "tar": "master", "fecha": "2026-05-13", "pi": "2026-05", "c": 6, "mpc": 15005.18}];
+// Cuotas que el banco informa en 'Total de cuotas a vencer' pero no aparecen en el detalle del resumen
+const OTRAS_CUOTAS={"2026-10": 47975.17, "2026-11": 152453.69, "2026-12": 230786.71, "2027-01": 148813.71, "2027-02": 148813.71, "2027-03": 148813.71};
+// Consumos de octubre (después del cierre) tomados de los mails de BBVA
+const CONSUMOS_INICIO=[{"fecha": "2026-10-01", "tar": "visa", "d": "NETFLIX.COM", "monto": 19999.0, "mon": "ARS"},
+  {"fecha": "2026-10-01", "tar": "visa", "d": "Google Workspace_r", "monto": 5.88, "mon": "USD"},
+  {"fecha": "2026-10-01", "tar": "visa", "d": "4809 TURBOENTRADA", "monto": 8000.0, "mon": "ARS"},
+  {"fecha": "2026-10-01", "tar": "visa", "d": "4809 TURBOENTRADA", "monto": 100000.0, "mon": "ARS"},
+  {"fecha": "2026-10-02", "tar": "visa", "d": "MERPAGO*CALZAVARA", "monto": 75352.4, "mon": "ARS"},
+  {"fecha": "2026-10-05", "tar": "visa", "d": "PAYPAL * WANGDEXXW", "monto": 266.0, "mon": "USD"},
+  {"fecha": "2026-10-05", "tar": "visa", "d": "GOOGLE *YouTubePre", "monto": 10299.0, "mon": "ARS"},
+  {"fecha": "2026-10-06", "tar": "visa", "d": "FEDERACION PATRONA", "monto": 24111.36, "mon": "ARS"},
+  {"fecha": "2026-10-07", "tar": "visa", "d": "MERPAGO*ASTUCOMPRA", "monto": 257207.82, "mon": "ARS"},
+  {"fecha": "2026-10-07", "tar": "visa", "d": "PAYU*AR*UBER", "monto": 2939.0, "mon": "ARS"},
+  {"fecha": "2026-10-08", "tar": "master", "d": "DA CORREDOR VIAL A", "monto": 53200.0, "mon": "ARS"},
+  {"fecha": "2026-10-08", "tar": "visa", "d": "LITORAL GAS SA", "monto": 16266.75, "mon": "ARS"},
+  {"fecha": "2026-10-08", "tar": "visa", "d": "Spotify P47C920F3A", "monto": 4499.0, "mon": "ARS"},
+  {"fecha": "2026-10-09", "tar": "visa", "d": "PAYU*AR*UBER", "monto": 2890.0, "mon": "ARS"},
+  {"fecha": "2026-10-10", "tar": "visa", "d": "MERPAGO*MERCADOLIB", "monto": 40482.0, "mon": "ARS"},
+  {"fecha": "2026-10-10", "tar": "master", "d": "EST DE SERV EDARGU", "monto": 100009.0, "mon": "ARS"},
+  {"fecha": "2026-10-12", "tar": "visa", "d": "PAYU*AR*UBER", "monto": 3290.0, "mon": "ARS"},
+  {"fecha": "2026-10-13", "tar": "visa", "d": "MERPAGO*PRECIOCALI", "monto": 179289.0, "mon": "ARS"},
+  {"fecha": "2026-10-13", "tar": "visa", "d": "MERPAGO*HBMOTOSTUF", "monto": 660000.0, "mon": "ARS"},
+  {"fecha": "2026-10-14", "tar": "visa", "d": "EPE SANTA FE", "monto": 37210.92, "mon": "ARS"},
+  {"fecha": "2026-10-14", "tar": "visa", "d": "EPE SANTA FE", "monto": 28756.19, "mon": "ARS"},
+  {"fecha": "2026-10-14", "tar": "visa", "d": "EPE SANTA FE", "monto": 35894.28, "mon": "ARS"}];
+// Mails a ignorar: ya estaban en el resumen cerrado o fueron compras rechazadas
+const IGNORAR=[{fecha:"2026-10-01",tar:"master",monto:3000},{fecha:"2026-10-02",tar:"visa",monto:0},{fecha:"2026-10-03",tar:"master",monto:106020.09}];
 
 // ── STATE ─────────────────────────────────────
 let fijos   = ld("gf") || JSON.parse(JSON.stringify(DEF_FIJOS));
 let ingresos= ld("ig") || [];
 let nuevos  = ld("ng") || [];
-let cfg     = ld("cc") || {visaDia:26,mcDia:26,gasUrl:""};
+let cfg     = ld("cc") || {gasUrl:""};
 
 function ld(k){try{const v=localStorage.getItem("gc2_"+k);return v?JSON.parse(v):null}catch{return null}}
 function sv(k,v){try{localStorage.setItem("gc2_"+k,JSON.stringify(v))}catch{}}
@@ -831,119 +839,172 @@ const $p = n=>"$"+Math.round(n).toLocaleString("es-AR");
 const $e = n=>"$"+n.toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 // ── PERÍODO LOGIC ─────────────────────────────
-function calcPer(fechaStr,tarjeta){
-  const d=new Date(fechaStr+"T12:00:00");
-  const dia=d.getDate();
-  const cierre=tarjeta==="visa"?cfg.visaDia:cfg.mcDia;
-  let y=d.getFullYear(),m=d.getMonth()+1;
-  if(dia>cierre){m++;if(m>12){m=1;y++;}}
-  return `${y}-${String(m).padStart(2,"0")}`;
+// Un "período" (YYYY-MM) es un resumen: el de octubre cierra el 29-Oct y vence el 11-Nov.
+// Visa y Mastercard BBVA cierran y vencen el mismo día.
+const CIERRES={"2026-08":{c:"2026-08-27",v:"2026-09-07"},"2026-09":{c:"2026-10-01",v:"2026-10-09"},"2026-10":{c:"2026-10-29",v:"2026-11-11"}};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const hoyISO=()=>iso(new Date());
+function fechasPer(key){
+  const ov=(cfg.cierres||{})[key];
+  if(ov&&ov.c&&ov.v) return {c:ov.c,v:ov.v,aprox:false};
+  if(CIERRES[key]) return {...CIERRES[key],aprox:false};
+  // Estimado: último jueves del mes, vence ~12 días después
+  const [y,m]=key.split("-").map(Number);
+  const c=new Date(y,m,0); while(c.getDay()!==4) c.setDate(c.getDate()-1);
+  const v=new Date(c); v.setDate(v.getDate()+12);
+  return {c:iso(c),v:iso(v),aprox:true};
 }
-// Período abierto actual (donde caen las compras de hoy)
+// Compras de antes del día de cierre entran en ese resumen; desde el día de cierre, en el siguiente
+function calcPer(fechaStr){
+  let key=sumMes(fechaStr.slice(0,7),-1);
+  for(let i=0;i<4;i++){ if(fechaStr<fechasPer(key).c) return key; key=sumMes(key,1); }
+  return key;
+}
+// Resumen abierto hoy
 function currentKey(){
-  const now=new Date();
-  const dia=now.getDate();
-  const cierre=cfg.visaDia||26;
-  let y=now.getFullYear(),m=now.getMonth()+1;
-  if(dia>cierre){m++;if(m>12){m=1;y++;}}
-  return `${y}-${String(m).padStart(2,"0")}`;
+  const h=hoyISO(); let key=sumMes(h.slice(0,7),-1);
+  for(let i=0;i<4;i++){ if(h<=fechasPer(key).c) return key; key=sumMes(key,1); }
+  return key;
 }
 function perLabel(key){
   const [y,m]=key.split("-").map(Number);
   const mn=["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   return `${mn[m]} ${String(y).slice(2)}`;
 }
-
 const MESES_L=["","enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function mesNombre(key){ const m=+key.split("-")[1]; return MESES_L[m][0].toUpperCase()+MESES_L[m].slice(1); }
 function sumMes(key,n){ let [y,m]=key.split("-").map(Number); m+=n; while(m>12){m-=12;y++;} while(m<1){m+=12;y--;} return `${y}-${String(m).padStart(2,"0")}`; }
 function difMeses(a,b){ const [ya,ma]=a.split("-").map(Number),[yb,mb]=b.split("-").map(Number); return (yb-ya)*12+(mb-ma); }
-// Fecha de vencimiento del resumen de un período (vence ~día 8 del mes siguiente)
-function vtoDe(key){
-  const b=BBVA.find(p=>p.key===key);
-  if(b) return b.vto.replace("~","");
-  const sig=sumMes(key,1); return `08 ${perLabel(sig).split(" ")[0]}`;
+const fCorta=f=>{const [y,m,d]=f.split("-").map(Number);return `${d} ${MESES_L[m].slice(0,3)}`;};
+const diasHasta=f=>Math.round((new Date(f+"T12:00:00")-new Date(hoyISO()+"T12:00:00"))/864e5);
+function vtoDe(key){ return fCorta(fechasPer(key).v); }
+const monDe=g=>g.mon||"ARS";
+const $u=n=>"U$S "+(+n).toLocaleString("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const $m=(n,mon)=>mon==="USD"?$u(n):$p(n);
+// Cuotas de cada gasto que caen en un período: [{g, i (índice en nuevos), nro}]
+function itemsDePer(key){
+  const out=[];
+  nuevos.forEach((g,i)=>{ const nro=difMeses(g.pi,key)+1; if(nro>=1&&nro<=g.c) out.push({g,i,nro}); });
+  return out;
 }
-// Montos de un período: lo proyectado del resumen + lo cargado/importado
+// Montos en pesos de un período (+ cuotas sin detalle que informa el banco)
 function montosPer(key){
-  const b=BBVA.find(p=>p.key===key)||{visa:0,mc:0};
-  const nv=nvPorPer()[key]||{v:0,mc:0};
-  return {visa:b.visa+nv.v, mc:b.mc+nv.mc};
+  let visa=OTRAS_CUOTAS[key]||0, mc=0, usdV=0, usdM=0;
+  itemsDePer(key).forEach(({g})=>{
+    if(monDe(g)==="USD"){ if(g.tar==="visa") usdV+=g.mpc; else usdM+=g.mpc; return; }
+    if(g.tar==="visa") visa+=g.mpc; else mc+=g.mpc;
+  });
+  return {visa,mc,usd:usdV+usdM,usdV,usdM};
 }
 
-// ── NUEVOS POR PERÍODO ────────────────────────
-function nvPorPer(){
-  const mp={};
-  nuevos.forEach(g=>{
-    const[y,m]=g.pi.split("-").map(Number);
-    for(let i=0;i<g.c;i++){
-      let mm=m+i,yy=y+Math.floor((mm-1)/12);
-      mm=((mm-1)%12)+1;
-      const k=`${yy}-${String(mm).padStart(2,"0")}`;
-      if(!mp[k])mp[k]={v:0,mc:0};
-      mp[k][g.tar==="visa"?"v":"mc"]+=g.mpc;
-    }
-  });
-  return mp;
+// ── PUNTO DE PARTIDA ──────────────────────────
+function itemsArranque(){
+  const arr=ARRASTRE.map(a=>({...a,mon:"ARS",origen:"resumen"}));
+  const cons=CONSUMOS_INICIO.map(x=>({d:x.d,tar:x.tar,fecha:x.fecha,pi:calcPer(x.fecha),c:1,mpc:x.monto,mon:x.mon,origen:"gmail",importado:"2026-10-15"}));
+  return [...arr,...cons];
 }
+// Se ejecuta una sola vez: deja el tablero con el estado del cierre del 1-Oct + lo gastado desde ahí.
+function aplicarArranque(){
+  if(cfg.arranque===ARRANQUE_VER) return;
+  try{ localStorage.setItem("gc2_backup_antes_arranque",JSON.stringify({nuevos,gmailHist:ld("gh"),cfg,fecha:new Date().toISOString()})); }catch{}
+  const base=itemsArranque();
+  const claves=new Set(base.map(g=>`${g.tar}|${g.fecha}|${Math.round(g.mpc*g.c)}`));
+  // Conservar lo que hayas cargado desde el cierre y que no esté ya en la base
+  const extra=nuevos.filter(g=>g.fecha>=INICIO && g.origen!=="resumen" && !claves.has(`${g.tar}|${g.fecha}|${Math.round(g.mpc*g.c)}`));
+  nuevos=[...base,...extra];
+  gmailHist=[];
+  cfg.arranque=ARRANQUE_VER; cfg.inicio=INICIO; cfg.arranqueVisto=false;
+  if(!cfg.usd) cfg.usd=1517;
+  sv("ng",nuevos); sv("gh",gmailHist); sv("cc",cfg);
+}
+function cerrarAviso(){ cfg.arranqueVisto=true; sv("cc",cfg); rInicio(); }
+function irTab(n){ const t=document.querySelector(`.tab[data-tab="${n}"]`); if(t) t.click(); window.scrollTo(0,0); }
 
 // ── RENDER INICIO ─────────────────────────────
 function rInicio(){
-  const hoy=currentKey();
-  const tf=fijosPorPer(hoy);
-  const mHoy=montosPer(hoy);const egAbr=tf+mHoy.visa+mHoy.mc;
-  const mes=mesNombre(hoy), vto=vtoDe(hoy);
+  const hoy=currentKey(), F=fechasPer(hoy), mes=mesNombre(hoy);
+  const M=montosPer(hoy), tarj=M.visa+M.mc;
+  const dias=diasHasta(F.v), diasCierre=diasHasta(F.c);
   const hm=document.getElementById("hdr-mes"); if(hm) hm.textContent=`Campiti Joaquín · ${mes} ${hoy.slice(0,4)}`;
-  const at=document.getElementById("alerta-vto-txt");
-  if(at) at.innerHTML=`<strong>Próximo vencimiento ${vto}</strong> (resumen de ${mes.toLowerCase()}): Visa ${$p(mHoy.visa)} · Mastercard ${$p(mHoy.mc)}`;
-  const ti=ingresosPorPer(hoy);
-  const disp=ti>0?ti-egAbr:null;
-  document.getElementById("sg").innerHTML=`
-    <div class="sc c-ing"><h3>Ingresos mensuales</h3><div class="am">${ti>0?$p(ti):"Sin cargar"}</div><div class="sb">${ingresos.length} concepto${ingresos.length!==1?"s":""}</div></div>
-    <div class="sc c-fijos"><h3>Gastos Fijos / mes</h3><div class="am">${$p(tf)}</div><div class="sb">${fijos.length} conceptos</div></div>
-    <div class="sc c-visa"><h3>Visa — vto. ${vto}</h3><div class="am">${$p(mHoy.visa)}</div><div class="sb">Resumen de ${mes.toLowerCase()}</div></div>
-    <div class="sc ${disp===null?"c-master":disp>=0?"c-pos":"c-neg"}">
-      <h3>${disp===null?`Mastercard — vto. ${vto}`:`Disponible ${mes}`}</h3>
-      <div class="am">${disp===null?$p(mHoy.mc):$p(disp)}</div>
-      <div class="sb">${disp===null?`Resumen de ${mes.toLowerCase()}`:disp>=0?"Después de todos los egresos":"Déficit este mes"}</div>
-    </div>`;
+
+  // Aviso de arranque (una vez)
+  document.getElementById("ini-aviso").innerHTML=cfg.arranqueVisto?"":`<div class="aviso">✅ <span><strong>Arrancamos de cero desde el cierre del 1 de octubre.</strong> Quedaron solo las cuotas que te faltan pagar (del resumen) y lo que gastaste después. Los datos viejos se borraron del tablero.</span><button onclick="cerrarAviso()" aria-label="Cerrar">✕</button></div>`;
+
+  // HERO: próximo vencimiento
+  document.getElementById("ini-hero").innerHTML=`<div class="hero">
+    <div class="k">Próximo vencimiento · resumen de ${mes.toLowerCase()}</div>
+    <div class="fecha"><b>${fCorta(F.v)}</b>${F.aprox?'<span class="chip chip-g">fecha aprox.</span>':''}<span class="chip chip-v">${dias>0?`faltan ${dias} días`:dias===0?"vence hoy":"vencido"}</span></div>
+    <div class="total">${$p(tarj)}</div>
+    ${M.usd>0?`<div class="usd">+ ${$u(M.usd)} en dólares</div>`:""}
+    <div class="split">
+      <div><small>Visa</small><strong>${$p(M.visa)}</strong>${M.usdV>0?`<div style="font-size:.72rem;color:#D9F0BC">+ ${$u(M.usdV)}</div>`:""}</div>
+      <div><small>Mastercard</small><strong>${$p(M.mc)}</strong>${M.usdM>0?`<div style="font-size:.72rem;color:#D9F0BC">+ ${$u(M.usdM)}</div>`:""}</div>
+    </div>
+    <div class="nota">${diasCierre>=0?`Cierra el <strong>${fCorta(F.c)}</strong>${diasCierre>0?` (en ${diasCierre} días)`:" (hoy)"}: lo que compres hasta ahí suma a este resumen.`:`Ya cerró el ${fCorta(F.c)}.`}</div>
+  </div>`;
+
+  // DÓLARES
+  const usdItems=itemsDePer(hoy).filter(x=>monDe(x.g)==="USD");
+  const cot=cfg.usd||1517, enPesos=M.usd*cot*1.30;
+  document.getElementById("ini-usd").innerHTML=`<h4><span>💵 Dólares del resumen</span><span class="tag u">${perLabel(hoy)}</span></h4>
+    <div class="big">${$u(M.usd)}</div>
+    ${M.usd>0?`
+      <div class="paso"><span class="n">1</span><span>Comprá <strong>${$u(Math.ceil(M.usd))}</strong> antes del vencimiento.</span></div>
+      <div class="paso"><span class="n">2</span><span>Pagá el saldo en dólares entre el <strong>${fCorta(F.c)}</strong> (cierre) y el <strong>${fCorta(F.v)}</strong> (vto.), antes de las 21:30.</span></div>
+      <div class="sub" style="margin-top:10px">Si lo dejás para que se pague en pesos: ≈ <strong>${$p(enPesos)}</strong> (a $${cot.toLocaleString("es-AR")} + 30% de percepción RG 5617).</div>
+      <ul class="lst">${usdItems.map(({g})=>`<li><span class="d">${g.d}<small>${fCorta(g.fecha)} · ${g.tar==="visa"?"Visa":"Master"}</small></span><span class="m">${$u(g.mpc)}</span></li>`).join("")}</ul>`
+    :`<div class="sub">Por ahora no hay consumos en dólares en este resumen.</div>`}`;
+
+  // DISPONIBLE
+  const ti=ingresosPorPer(hoy), tf=fijosPorPer(hoy), eg=tf+tarj, disp=ti-eg;
+  const base=Math.max(ti,eg)||1;
+  document.getElementById("ini-disp").innerHTML=`<h4><span>Disponible ${mes.toLowerCase()}</span></h4>
+    ${ti>0?`<div class="big ${disp>=0?"pos":"neg"}">${disp>=0?"":"−"}${$p(Math.abs(disp))}</div>
+      <div class="sub">${disp>=0?"Te queda después de fijos y tarjetas.":"Te faltan para cubrir fijos y tarjetas."}</div>`
+     :`<div class="big" style="color:var(--gris)">—</div><div class="sub">Cargá tus ingresos en <button class="lnk" onclick="irTab('ingresos')">💰 Ingresos</button> para ver cuánto te queda.</div>`}
+    <div class="barra" style="position:relative;overflow:visible">${ti>0&&ti<eg?`<b style="position:absolute;left:${ti/base*100}%;top:-4px;bottom:-4px;width:3px;margin-left:-1px;background:var(--verde-osc);border-radius:2px" title="Ingresos"></b>`:""}<span style="width:${tf/base*100}%;background:#6B9BF2;border-radius:6px 0 0 6px"></span><span style="width:${tarj/base*100}%;background:var(--azul)"></span>${ti>eg?`<span style="width:${(ti-eg)/base*100}%;background:var(--verde)"></span>`:""}</div>
+    <div class="ley"><span><i style="background:#6B9BF2"></i>Fijos ${$p(tf)}</span><span><i style="background:var(--azul)"></i>Tarjetas ${$p(tarj)}</span><span><i style="background:${ti<eg?"var(--verde-osc)":"var(--verde)"}"></i>Ingresos ${$p(ti)}${ti>0&&ti<eg?" (línea)":""}</span></div>`;
+
+  // CUOTAS EN ESTE RESUMEN
+  const cuo=itemsDePer(hoy).filter(x=>x.g.c>1&&monDe(x.g)==="ARS").sort((a,b)=>b.g.mpc-a.g.mpc);
+  const otras=OTRAS_CUOTAS[hoy]||0;
+  const totCuo=cuo.reduce((s,x)=>s+x.g.mpc,0)+otras;
+  const top=cuo.slice(0,7);
+  document.getElementById("ini-cuotas").innerHTML=`<h4><span>Cuotas en este resumen</span><span>${$p(totCuo)}</span></h4>
+    <ul class="lst">${top.map(({g,nro})=>`<li><span class="d">${g.d}<small>cuota ${nro}/${g.c}${nro===g.c?" · última":""} · ${g.tar==="visa"?"Visa":"Master"}</small></span><span class="m">${$p(g.mpc)}</span></li>`).join("")}
+    ${otras>0?`<li><span class="d">Otras cuotas<small>informadas por el banco, sin detalle</small></span><span class="m">${$p(otras)}</span></li>`:""}</ul>
+    ${cuo.length>top.length?`<button class="lnk" style="margin-top:8px" onclick="irTab('tarjetas')">Ver las ${cuo.length} cuotas →</button>`:""}`;
+
+  // CONSUMOS NUEVOS (desde el cierre)
+  const nuevosPer=itemsDePer(hoy).filter(x=>x.g.origen!=="resumen"&&x.nro===1).sort((a,b)=>b.g.fecha.localeCompare(a.g.fecha));
+  const totN=nuevosPer.filter(x=>monDe(x.g)==="ARS").reduce((s,x)=>s+x.g.mpc,0);
+  document.getElementById("ini-consumos").innerHTML=`<h4><span>Gastos nuevos de ${mes.toLowerCase()}</span><span>${$p(totN)}</span></h4>
+    ${nuevosPer.length?`<ul class="lst">${nuevosPer.slice(0,7).map(({g})=>`<li><span class="d">${g.d}<small>${fCorta(g.fecha)} · ${g.tar==="visa"?"Visa":"Master"}${g.c>1?` · ${g.c} cuotas`:""}</small></span><span class="m">${$m(g.mpc,monDe(g))}</span></li>`).join("")}</ul>
+      <button class="lnk" style="margin-top:8px" onclick="irTab('nuevos')">Ver los ${nuevosPer.length} gastos →</button>`
+    :`<div class="sub">Todavía no hay gastos nuevos en este resumen.</div>`}`;
 }
 
 // ── RENDER PROYECCIÓN ─────────────────────────
 function rProy(){
-  const nv=nvPorPer();
   const hoy=currentKey();
   let html="";
-  BBVA.forEach(p=>{
-    const tf=fijosPorPer(p.key);
-    const ti=ingresosPorPer(p.key);
-    const isCur=(p.key===hoy);
-    const isPast=p.key<hoy;
-    const nvp=nv[p.key]||{v:0,mc:0};
-    const nvt=nvp.v+nvp.mc;
-    // Para período actual y futuros: sumar nuevos; para pasados: solo BBVA
-    const egVisa=p.visa+(isPast?0:nvp.v);
-    const egMc=p.mc+(isPast?0:nvp.mc);
-    const egTotal=tf+egVisa+egMc;
-    const disp=ti>0?ti-egTotal:null;
-    const rowCls=isCur?"rcur":(isPast?"":disp!==null&&disp<0?"rneg":disp!==null&&disp>=0?"rpos":"");
-    const dispHtml=isPast
-      ?`<span style="color:#94a3b8;font-size:.78rem">pagado</span>`
-      :disp===null
-        ?`<span style="color:#94a3b8;font-size:.8rem">—</span>`
-        :`<span class="${disp>=0?"bpos":"bneg"}">${disp>=0?"＋":""}${$p(disp)}</span>`;
-    html+=`<tr class="${rowCls}" style="${isPast?"opacity:.55":""}">
-      <td><strong>${p.per}</strong>${isCur?`<span class="vchip">⚡ HOY</span>`:""}</td>
-      <td style="font-size:.8rem;color:#64748b">${p.vto}</td>
-      <td class="ar" style="color:#047857;font-weight:700">${ti>0?$p(ti):`<span style="color:#cbd5e1">—</span>`}</td>
+  for(let i=0;i<8;i++){
+    const k=sumMes(hoy,i), M=montosPer(k);
+    const tf=fijosPorPer(k), ti=ingresosPorPer(k);
+    const nv=itemsDePer(k).filter(x=>x.g.origen!=="resumen"&&monDe(x.g)==="ARS").reduce((s,x)=>s+x.g.mpc,0);
+    const eg=tf+M.visa+M.mc, disp=ti>0?ti-eg:null;
+    html+=`<tr class="${i===0?"rcur":disp!==null&&disp<0?"rneg":""}">
+      <td><strong>${perLabel(k)}</strong>${i===0?`<span class="vchip" style="background:var(--verde-cl);color:var(--verde-osc)">ACTUAL</span>`:""}</td>
+      <td style="font-size:.8rem;color:#64748b">${vtoDe(k)}${fechasPer(k).aprox?"*":""}</td>
+      <td class="ar" style="color:var(--verde-osc);font-weight:700">${ti>0?$p(ti):'<span style="color:#cbd5e1">—</span>'}</td>
       <td class="ar">${$p(tf)}</td>
-      <td class="ar" style="color:#1d4ed8"><strong>${$p(p.visa)}</strong>${!isPast&&nvp.v>0?`<br><span style="font-size:.75rem;color:#d97706">+${$p(nvp.v)}</span>`:""}</td>
-      <td class="ar" style="color:#b91c1c">${p.mc>0||nvp.mc>0?$p(p.mc+nvp.mc):`<span style="color:#cbd5e1">—</span>`}</td>
-      <td class="ar" style="color:${nvt>0?"#d97706":"#cbd5e1"}">${nvt>0?$p(nvt):"—"}</td>
-      <td class="ar"><strong>${$p(egTotal)}</strong></td>
-      <td class="ar">${dispHtml}</td>
+      <td class="ar" style="color:var(--azul)"><strong>${$p(M.visa)}</strong>${M.usdV>0?`<br><span style="font-size:.72rem;color:var(--verde-osc)">+ ${$u(M.usdV)}</span>`:""}</td>
+      <td class="ar">${M.mc>0?$p(M.mc):'<span style="color:#cbd5e1">—</span>'}</td>
+      <td class="ar" style="color:#64748b">${nv>0?$p(nv):"—"}</td>
+      <td class="ar"><strong>${$p(eg)}</strong></td>
+      <td class="ar">${disp===null?'<span style="color:#94a3b8">—</span>':`<span class="${disp>=0?"bpos":"bneg"}">${disp>=0?"＋":""}${$p(disp)}</span>`}</td>
     </tr>`;
-  });
+  }
   document.getElementById("tb-proy").innerHTML=html;
 }
 
@@ -1025,36 +1086,6 @@ function rFijos(){
   }).join("");
 }
 
-// ── RENDER VISA ───────────────────────────────
-function rVisa(){
-  document.getElementById("tb-visa").innerHTML=VISA_TXS.map(t=>{
-    const b=t.c?`<span class="badge bc">${t.c}/${t.t}</span>`:`<span style="color:#cbd5e1;font-size:.78rem">—</span>`;
-    const ms=t.mo==="U$S"?`<span style="color:#0891b2;font-weight:600">U$S ${t.m.toFixed(2)}</span>`:$e(t.m);
-    return `<tr><td style="white-space:nowrap">${t.f}</td><td>${t.d}</td><td>${b}</td><td class="ar">${ms}</td></tr>`;
-  }).join("")+`<tr class="rtot"><td colspan="3"><strong>Total</strong></td><td class="ar"><strong>$1.908.783,57 + U$S 33,46</strong></td></tr>`;
-}
-
-// ── RENDER CUOTAS ─────────────────────────────
-function rCuotas(){
-  const hoy=currentKey(), avance=difMeses("2026-03",hoy); // el resumen cargado es el de marzo 2026
-  const filas=[];
-  VISA_TXS.filter(t=>t.c&&t.t).forEach(t=>{
-    const c=t.c+avance; if(c<1||c>t.t) return;
-    filas.push({d:t.d,c,t:t.t,m:t.m});
-  });
-  nuevos.filter(g=>g.tar==="visa"&&g.c>1).forEach(g=>{
-    const c=difMeses(g.pi,hoy)+1; if(c<1||c>g.c) return;
-    filas.push({d:g.d,c,t:g.c,m:g.mpc});
-  });
-  const tit=document.getElementById("tit-cuotas"); if(tit) tit.textContent=`Cuotas Visa en el resumen de ${mesNombre(hoy).toLowerCase()}`;
-  const tb=document.getElementById("tb-cuotas");
-  if(!filas.length){ tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px">Sin cuotas este mes</td></tr>`; return; }
-  tb.innerHTML=filas.map(t=>{
-    const r=t.t-t.c;
-    return `<tr><td>${t.d}</td><td><span class="badge bc">${t.c}/${t.t}</span></td><td class="ar">${$e(t.m)}</td><td><strong>${r}</strong> c.</td><td class="ar" style="color:#d97706;font-weight:800">${$p(r*t.m)}</td></tr>`;
-  }).join("");
-}
-
 // ── RENDER NUEVOS ─────────────────────────────
 function rNuevos(){
   const c=document.getElementById("cont-nuevos");
@@ -1074,20 +1105,23 @@ function rNuevos(){
         <td class="ar"><strong>${$p(g.mpc*g.c)}</strong></td>
         <td><button class="bi d" onclick="delNuevo(${i})">✕</button></td></tr>`}).join("")}</tbody></table></div>`).join("");
   }
-  if(!nuevos.length){c.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>Sin nuevos gastos.</p></div>`;return;}
-  c.innerHTML=`<div class="tw"><table><thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th>Período</th><th>Cuotas</th><th class="ar">$ / cuota</th><th class="ar">Total</th><th></th></tr></thead>
-  <tbody>${nuevos.map((g,i)=>`<tr style="${dupIdx.has(i)?"background:#fefce8":""}">
-    <td>${g.d}${dupIdx.has(i)?' <span style="font-size:.68rem;color:#b45309;font-weight:700">⚠️ repetido</span>':""}</td>
+  if(!nuevos.length){c.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>Sin gastos cargados.</p></div>`;return;}
+  const orden=nuevos.map((g,i)=>i).sort((a,b)=>(nuevos[a].origen==="resumen")-(nuevos[b].origen==="resumen")||nuevos[b].fecha.localeCompare(nuevos[a].fecha));
+  const org=g=>g.origen==="resumen"?'<span class="tag m">📄 Resumen</span>':g.origen==="gmail"?'<span class="tag">📧 Gmail</span>':'<span class="tag u">✍️ Manual</span>';
+  c.innerHTML=`<div class="tw"><table><thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th>1ª cuota</th><th>Cuotas</th><th class="ar">$ / cuota</th><th class="ar">Total</th><th></th></tr></thead>
+  <tbody>${orden.map(i=>{const g=nuevos[i];return `<tr style="${dupIdx.has(i)?"background:#fefce8":""}">
+    <td>${g.d}${dupIdx.has(i)?' <span style="font-size:.68rem;color:#b45309;font-weight:700">⚠️ repetido</span>':""}<div style="margin-top:3px">${org(g)}</div></td>
     <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
     <td>${g.fecha}</td>
     <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(g.pi)}</span></td>
     <td>${g.c===1?"Único":g.c+" c."}</td>
-    <td class="ar">${$p(g.mpc)}</td>
-    <td class="ar"><strong>${$p(g.mpc*g.c)}</strong></td>
-    <td><button class="bi d" onclick="delNuevo(${i})">✕</button></td>
-  </tr>`).join("")}</tbody></table></div>`;
+    <td class="ar">${$m(g.mpc,monDe(g))}</td>
+    <td class="ar"><strong>${$m(g.mpc*g.c,monDe(g))}</strong></td>
+    <td style="white-space:nowrap"><button class="bi e" onclick="openModalGasto(${i})" title="Editar">✏️</button><button class="bi d" onclick="delNuevo(${i})">✕</button></td>
+  </tr>`}).join("")}</tbody></table></div>`;
 }
 
+window.nuevosARS=()=>nuevos.filter(g=>monDe(g)==="ARS");
 // ── RENDER TARJETAS ───────────────────────────
 let tjFilPU="ambas";   // filtro pagos únicos
 let tjFilCA="ambas";   // filtro cuotas activas
@@ -1114,6 +1148,7 @@ function cuotasPagadas(g, hoyKey){
 }
 
 function rTarjetas(){
+  const nuevos=window.nuevosARS(); // los dólares se muestran aparte en Inicio
   const hoy=currentKey();
   // ── Totales para resumen ──
   let totVisaMes=0, totMasterMes=0;
@@ -1134,6 +1169,9 @@ function rTarjetas(){
     });
   });
 
+  // Sumar las cuotas que el banco informa sin detalle (todas Visa)
+  totVisaMes+=OTRAS_CUOTAS[hoy]||0;
+  Object.keys(OTRAS_CUOTAS).forEach(k=>{ if(k>=hoy) pendVisa+=OTRAS_CUOTAS[k]; });
   // Resumen cards
   document.getElementById("tj-resumen").innerHTML=`
     <div class="sc c-visa">
@@ -1152,7 +1190,7 @@ function rTarjetas(){
   const mkBtn=(id,activo)=>{
     const el=document.getElementById(id);
     if(!el) return;
-    const col= id.includes("visa") ? "#1d4ed8" : id.includes("master") ? "#b91c1c" : "#0f172a";
+    const col= id.includes("visa") ? "#1D4ED8" : id.includes("master") ? "#14305E" : "#4E7F17";
     if(activo){
       el.style.background=col; el.style.color="#fff"; el.style.border="none";
     }else{
@@ -1221,7 +1259,7 @@ function rTarjetas(){
           <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
           <td>
             <div style="display:flex;align-items:center;gap:6px">
-              <div class="prog" style="width:70px"><div class="pf" style="width:${pct}%;background:${g.tar==="visa"?"#1d4ed8":"#b91c1c"}"></div></div>
+              <div class="prog" style="width:70px"><div class="pf" style="width:${pct}%;background:${g.tar==="visa"?"#1D4ED8":"#14305E"}"></div></div>
               <span style="font-size:.75rem;font-weight:700">${pagadas}/${g.c}</span>
             </div>
           </td>
@@ -1242,7 +1280,7 @@ function rTarjetas(){
     let mm=m+i, yy=y+Math.floor((mm-1)/12);
     mm=((mm-1)%12)+1;
     const k=`${yy}-${String(mm).padStart(2,"0")}`;
-    let v=0, ms=0;
+    let v=OTRAS_CUOTAS[k]||0, ms=0;
     nuevos.forEach(g=>{
       const pers=periodosDeCuota(g);
       if(pers.includes(k)){
@@ -1273,52 +1311,53 @@ function rChart(){
   const cv=document.getElementById("chartMain");
   if(!cv) return;
   if(typeof Chart==="undefined"){ console.warn("Chart.js no cargó todavía"); return; }
-  const ctx=cv.getContext("2d");
-  const hoy=currentKey();const fut=BBVA.filter(p=>p.key>=hoy);
-  const nv=nvPorPer();
+  const hoy=currentKey(); const ks=[0,1,2,3,4,5].map(i=>sumMes(hoy,i));
+  const tarj=ks.map(k=>{const M=montosPer(k);return M.visa+M.mc;});
+  const ing=ks.map(k=>ingresosPorPer(k));
   if(ch)ch.destroy();
-  ch=new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:fut.map(p=>p.per),
-      datasets:[
-        {label:"Gastos Fijos",data:fut.map(p=>fijosPorPer(p.key)),backgroundColor:"rgba(8,145,178,.7)",borderRadius:3,stack:"eg"},
-        {label:"Cuotas Visa",data:fut.map(p=>p.visa),backgroundColor:"rgba(30,77,140,.8)",borderRadius:3,stack:"eg"},
-        {label:"Nuevos",data:fut.map(p=>{const nvp=nv[p.key]||{v:0,mc:0};return nvp.v+nvp.mc}),backgroundColor:"rgba(217,119,6,.8)",borderRadius:3,stack:"eg"},
-        {label:"Ingreso",data:fut.map(p=>ingresosPorPer(p.key)),backgroundColor:"rgba(4,120,87,.25)",borderWidth:2,borderColor:"rgba(4,120,87,.7)",borderRadius:3,stack:"ing"},
-      ]
-    },
+  const ds=[
+    {type:"bar",label:"Fijos",data:ks.map(k=>fijosPorPer(k)),backgroundColor:"#6B9BF2",borderColor:"#fff",borderWidth:{top:2},borderRadius:0,stack:"eg",order:2},
+    {type:"bar",label:"Tarjetas",data:tarj,backgroundColor:"#1D4ED8",borderColor:"#fff",borderWidth:{top:2},borderRadius:{topLeft:4,topRight:4},stack:"eg",order:2},
+  ];
+  if(ing.some(v=>v>0)) ds.push({type:"line",label:"Ingresos",data:ing,borderColor:"#5E9E1F",backgroundColor:"#5E9E1F",borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0,order:1});
+  ch=new Chart(cv.getContext("2d"),{
+    data:{labels:ks.map(perLabel),datasets:ds},
     options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:"bottom",labels:{boxWidth:11,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${$p(c.raw)}`}}},
-      scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v>=1e6?`$${(v/1e6).toFixed(1)}M`:v>=1000?`$${(v/1000).toFixed(0)}K`:"$0"}}}
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      plugins:{legend:{position:"bottom",labels:{boxWidth:11,font:{size:11},color:"#334155"}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${$p(c.raw)}`}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:"#64748B"}},y:{stacked:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{color:"#64748B",callback:v=>v>=1e6?`$${(v/1e6).toFixed(1)}M`:v>=1000?`$${(v/1000).toFixed(0)}K`:"$0"}}}
     }
   });
 }
 
 // ── MODALS ────────────────────────────────────
-function openModalGasto(){
-  document.getElementById("g-fecha").value=new Date().toISOString().split("T")[0];
-  document.getElementById("g-cuotas").value=1;
-  document.getElementById("g-monto").value="";
-  document.getElementById("g-desc").value="";
+function openModalGasto(i=-1){
+  const g=i>=0?nuevos[i]:null;
+  document.getElementById("g-idx").value=i;
+  document.getElementById("tit-gasto").textContent=g?"✏️ Editar gasto":"💳 Registrar nuevo gasto";
+  document.getElementById("g-fecha").value=g?g.fecha:hoyISO();
+  document.getElementById("g-cuotas").value=g?g.c:1;
+  document.getElementById("g-monto").value=g?Math.round(g.mpc*g.c*100)/100:"";
+  document.getElementById("g-desc").value=g?g.d:"";
+  document.getElementById("g-tar").value=g?g.tar:"visa";
+  document.getElementById("g-mon").value=g?monDe(g):"ARS";
   updPer();updCuota();
   openOv("ov-gasto");
 }
 function updPer(){
   const f=document.getElementById("g-fecha").value;
-  const tar=document.getElementById("g-tar").value;
   const el=document.getElementById("g-pprev");
   if(!f){el.textContent="";return;}
-  const k=calcPer(f,tar);
-  const dia=new Date(f+"T12:00:00").getDate();
-  const cd=tar==="visa"?cfg.visaDia:cfg.mcDia;
-  el.innerHTML=`📅 Día ${dia} (cierre día ${cd}) → resumen de <strong>${perLabel(k)}</strong>`;
+  const i=+document.getElementById("g-idx").value, g=i>=0?nuevos[i]:null;
+  if(g&&g.origen==="resumen"){el.innerHTML=`📄 Viene del resumen: primera cuota en <strong>${perLabel(g.pi)}</strong>.`;return;}
+  const k=calcPer(f), F=fechasPer(k);
+  el.innerHTML=`📅 Entra en el resumen de <strong>${mesNombre(k)}</strong> (cierra ${fCorta(F.c)}, vence ${fCorta(F.v)}).`;
 }
 function updCuota(){
   const m=parseFloat(document.getElementById("g-monto").value)||0;
   const c=parseInt(document.getElementById("g-cuotas").value)||1;
-  document.getElementById("g-cprev").textContent=m>0?(c===1?`Pago único ${$p(m)}`:`${c} cuotas de ${$p(m/c)} c/u`):"Ingresá el monto.";
+  const mon=document.getElementById("g-mon").value;
+  document.getElementById("g-cprev").textContent=m>0?(c===1?`Pago único ${$m(m,mon)}`:`${c} cuotas de ${$m(m/c,mon)} c/u`):"Ingresá el monto.";
 }
 function saveGasto(){
   const d=document.getElementById("g-desc").value.trim();
@@ -1326,11 +1365,20 @@ function saveGasto(){
   const fecha=document.getElementById("g-fecha").value;
   const monto=parseFloat(document.getElementById("g-monto").value);
   const c=parseInt(document.getElementById("g-cuotas").value)||1;
+  const mon=document.getElementById("g-mon").value;
+  const i=+document.getElementById("g-idx").value;
   if(!d||!fecha||!monto){alert("Completá todos los campos.");return;}
-  nuevos.push({d,tar,fecha,pi:calcPer(fecha,tar),c,mpc:monto/c});
-  sv("ng",nuevos);closeOv("ov-gasto");rNuevos();rProy();rChart();rTarjetas();
+  if(i>=0){
+    const g=nuevos[i];
+    const pi=g.origen==="resumen"?g.pi:calcPer(fecha);
+    nuevos[i]={...g,d,tar,fecha,pi,c,mpc:monto/c,mon};
+  }else{
+    nuevos.push({d,tar,fecha,pi:calcPer(fecha),c,mpc:monto/c,mon,origen:"manual"});
+  }
+  sv("ng",nuevos);closeOv("ov-gasto");refrescar();
 }
-function delNuevo(i){if(confirm("¿Eliminar?")){nuevos.splice(i,1);sv("ng",nuevos);rNuevos();rProy();rChart();rTarjetas();}}
+function refrescar(){ ["rInicio","rNuevos","rProy","rChart","rTarjetas"].forEach(n=>safe(window[n],n)); }
+function delNuevo(i){if(confirm(`¿Eliminar "${nuevos[i].d}"?`)){nuevos.splice(i,1);sv("ng",nuevos);refrescar();}}
 
 function openModalFijo(i=-1){
   document.getElementById("f-idx").value=i;
@@ -1422,21 +1470,30 @@ function delIng(i){if(confirm(`¿Eliminar "${ingresos[i].n}"?`)){ingresos.splice
 
 // ── CONFIG ────────────────────────────────────
 function loadCfg(){
-  document.getElementById("cfg-visa").value=cfg.visaDia||26;
-  document.getElementById("cfg-mc").value=cfg.mcDia||26;
-  document.getElementById("lbl-visa-dia").textContent=`Día ${cfg.visaDia||26}`;
-  document.getElementById("lbl-mc-dia").textContent=`Día ${cfg.mcDia||26}`;
+  const hoy=currentKey();
+  document.getElementById("cfg-fechas").innerHTML=[hoy,sumMes(hoy,1)].map(k=>{const F=fechasPer(k);return `
+    <div class="cr"><div class="cl">Resumen de ${mesNombre(k).toLowerCase()}${F.aprox?'<small>Fechas estimadas: corregilas cuando llegue el resumen</small>':'<small>Fechas confirmadas</small>'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="font-size:.72rem;color:#64748b">Cierre<br><input type="date" class="ci" style="width:150px" value="${F.c}" onchange="setFecha('${k}','c',this.value)"></label>
+        <label style="font-size:.72rem;color:#64748b">Vencimiento<br><input type="date" class="ci" style="width:150px" value="${F.v}" onchange="setFecha('${k}','v',this.value)"></label>
+      </div></div>`}).join("");
+  document.getElementById("cfg-usd").value=cfg.usd||1517;
   const urlInput=document.getElementById("cfg-gas-url");
   if(urlInput) urlInput.value=cfg.gasUrl||"";
   updGmailBloque();
 }
+function setFecha(k,campo,val){
+  if(!val) return;
+  cfg.cierres=cfg.cierres||{};
+  const F=fechasPer(k);
+  cfg.cierres[k]={c:F.c,v:F.v,[campo]:val};
+  sv("cc",cfg); loadCfg(); refrescar();
+}
 function saveConfig(){
-  cfg.visaDia=parseInt(document.getElementById("cfg-visa").value)||26;
-  cfg.mcDia=parseInt(document.getElementById("cfg-mc").value)||26;
+  cfg.usd=parseFloat(document.getElementById("cfg-usd").value)||1517;
   cfg.gasUrl=(document.getElementById("cfg-gas-url").value||"").trim();
   sv("cc",cfg);
-  loadCfg();
-  // Mostrar feedback en config
+  loadCfg(); safe(rInicio,"rInicio");
   const st=document.getElementById("cfg-gas-status");
   if(cfg.gasUrl){st.style.display="block";st.style.color="#047857";st.textContent="✅ URL guardada. Ahora podés usar el botón en la pestaña 📧 Gmail.";}
   else{st.style.display="none";}
@@ -1459,7 +1516,9 @@ async function fetchGmail(){
   const orig=btn.innerHTML;
   btn.innerHTML="⏳ Conectando...";btn.disabled=true;
   try{
-    const resp=await fetch(cfg.gasUrl+"?dias=90",{redirect:"follow"});
+    const desde=cfg.inicio||INICIO;
+    const dias=Math.max(7,-diasHasta(desde)+2);
+    const resp=await fetch(cfg.gasUrl+"?dias="+dias,{redirect:"follow"});
     if(!resp.ok)throw new Error(`Error HTTP ${resp.status}`);
     const data=await resp.json();
     if(!data.ok)throw new Error(data.error||"Error desconocido");
@@ -1468,7 +1527,7 @@ async function fetchGmail(){
     const ult=document.getElementById("gmail-ultimo");
     if(ult)ult.textContent=`Actualizado: ${data.generado}`;
     if(!data.consumos||!data.consumos.length){
-      alert("✅ Sin consumos nuevos en los últimos 90 días.");
+      alert("✅ No hay consumos nuevos.");
       btn.innerHTML=orig;btn.disabled=false;return;
     }
     // Filtrar lo que ya está cargado (Gmail o manual)
@@ -1489,7 +1548,7 @@ async function fetchGmail(){
   }
 }
 function resetFijos(){if(confirm("¿Restablecer gastos fijos?")){fijos=JSON.parse(JSON.stringify(DEF_FIJOS));sv("gf",fijos);rFijos();rInicio();rProy();rChart();}}
-function resetNuevos(){if(confirm("¿Eliminar todos los nuevos gastos?")){nuevos=[];sv("ng",nuevos);rNuevos();rProy();rChart();rTarjetas();}}
+function resetNuevos(){if(confirm("¿Borrar todos los gastos cargados? Quedan solo las cuotas que venían del resumen.")){nuevos=nuevos.filter(g=>g.origen==="resumen");sv("ng",nuevos);refrescar();}}
 
 // ── GMAIL IMPORT ──────────────────────────────
 let gmailPending = []; // consumos parseados pendientes de confirmar
@@ -1516,6 +1575,11 @@ const claveExacta=g=>`${claveBase(g)}|${normD(g.d)}`;              // + descripc
 // Separa los consumos que llegan en: ya cargados (se saltean) y pendientes.
 // Si coincide tarjeta+fecha+monto pero la descripción es distinta, lo deja pasar marcado como posible duplicado.
 function filtrarYaCargados(items){
+  const desde=cfg.inicio||INICIO;
+  const ign=new Set(IGNORAR.map(x=>`${x.tar}|${x.fecha}|${Math.round(x.monto)}`));
+  const antes=items.length;
+  items=items.filter(x=>x.fecha>=desde && !x.rechazada && +x.monto>0 && !ign.has(`${x.tar}|${x.fecha}|${Math.round(x.monto)}`));
+  let viejos=antes-items.length;
   const exactas=new Map(), base=new Map();
   [...nuevos,...gmailHist].forEach(g=>{
     exactas.set(claveExacta(g),(exactas.get(claveExacta(g))||0)+1);
@@ -1529,7 +1593,7 @@ function filtrarYaCargados(items){
     if(base.has(claveBase(x))) item.posibleDup=base.get(claveBase(x));
     pend.push(item);
   });
-  return {pend,salteados};
+  return {pend,salteados:salteados+viejos};
 }
 
 // Grupos de gastos ya cargados que coinciden en tarjeta + fecha + monto total
@@ -1570,19 +1634,19 @@ function renderGmailPreview(){
   const res = document.getElementById("gmail-resumen");
   if(res){ res.textContent=gmailResumen||""; res.style.display=gmailResumen?"block":"none"; }
   body.innerHTML = gmailPending.map((g,i)=>{
-    const per = calcPer(g.fecha, g.tar);
+    const per = calcPer(g.fecha);
     const mpc = g.monto / (g.cuotas||1);
     return `<tr id="grow-${i}">
       <td style="white-space:nowrap">${g.fecha}</td>
       <td><strong>${g.d}</strong>${g.posibleDup?`<div style="font-size:.7rem;color:#b45309;font-weight:700;margin-top:2px">⚠️ Posible duplicado de "${g.posibleDup}" (mismo día, tarjeta y monto). Si es el mismo, quitalo con ✕</div>`:""}</td>
       <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
       <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(per)}</span></td>
-      <td class="ar"><strong>${$p(g.monto)}</strong></td>
+      <td class="ar"><strong>${$m(g.monto,g.mon||"ARS")}</strong></td>
       <td style="text-align:center">
         <input type="number" min="1" max="48" value="${g.cuotas||1}" style="width:55px;padding:5px 7px;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem;text-align:center"
           oninput="updGmailCuota(${i},this.value)" onchange="updGmailCuota(${i},this.value)">
       </td>
-      <td class="ar" id="gmpc-${i}">${$p(mpc)}</td>
+      <td class="ar" id="gmpc-${i}">${$m(mpc,g.mon||"ARS")}</td>
       <td><button class="bi d" onclick="quitarGmailItem(${i})" title="Quitar">✕</button></td>
     </tr>`;
   }).join("");
@@ -1591,7 +1655,7 @@ function renderGmailPreview(){
 function updGmailCuota(i, val){
   const c = Math.max(1,parseInt(val)||1);
   gmailPending[i].cuotas = c;
-  document.getElementById(`gmpc-${i}`).textContent = $p(gmailPending[i].monto / c);
+  document.getElementById(`gmpc-${i}`).textContent = $m(gmailPending[i].monto / c, gmailPending[i].mon||"ARS");
 }
 
 function quitarGmailItem(i){
@@ -1615,7 +1679,7 @@ function importarTodo(){
     const c = g.cuotas||1;
     const mpc = g.monto/c;
     const per = calcPer(g.fecha, g.tar);
-    const item = {d:g.d, tar:g.tar, fecha:g.fecha, pi:per, c, mpc, origen:"gmail", importado:ahora};
+    const item = {d:g.d, tar:g.tar, fecha:g.fecha, pi:per, c, mpc, mon:g.mon==="USD"?"USD":"ARS", origen:"gmail", importado:ahora};
     nuevos.push(item);
     gmailHist.push(item);
   });
@@ -1623,7 +1687,7 @@ function importarTodo(){
   sv("gh", gmailHist);
   gmailPending=[];
   volverPaso1();
-  rNuevos(); rProy(); rChart(); rTarjetas(); rGmailHist(); rGmailStats();
+  refrescar(); rGmailHist(); rGmailStats();
   // mostrar confirmación
   const p2 = document.getElementById("gmail-paso2");
   p2.style.display="none";
@@ -1686,12 +1750,11 @@ function initApp(){
   });
 
   // 2) Correr inicializaciones aisladas — si una falla, el resto sigue andando
+  safe(aplicarArranque,"aplicarArranque");
   safe(rInicio,"rInicio");
   safe(rProy,"rProy");
   safe(rFijos,"rFijos");
   safe(rIngresos,"rIngresos");
-  safe(rVisa,"rVisa");
-  safe(rCuotas,"rCuotas");
   safe(rNuevos,"rNuevos");
   safe(rTarjetas,"rTarjetas");
   safe(loadCfg,"loadCfg");
