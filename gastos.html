@@ -279,7 +279,7 @@ tr:hover td{background:#fafbff}
 <body>
 
 <div class="header">
-  <div><h1>💳 Gestión de Gastos</h1><p>Campiti Joaquín · Abril 2026</p></div>
+  <div><h1>💳 Gestión de Gastos</h1><p id="hdr-mes">Campiti Joaquín</p></div>
   <button class="btn-header" onclick="openModalGasto()">＋ Nuevo gasto</button>
 </div>
 
@@ -301,7 +301,7 @@ tr:hover td{background:#fafbff}
 <div class="container">
   <div class="sg" id="sg"></div>
   <div class="alert aw" id="alerta-vto">
-    ⚠️ <span><strong>Vencimiento 9 de abril:</strong> Visa $1.933.662,20 + U$S 33,46 · Mastercard $15.554,54</span>
+    ⚠️ <span id="alerta-vto-txt"></span>
   </div>
   <div class="card">
     <div class="sh">
@@ -311,7 +311,7 @@ tr:hover td{background:#fafbff}
     <div class="cw"><canvas id="chartMain"></canvas></div>
   </div>
   <div class="card">
-    <div class="sh"><div class="st">Cuotas activas — Visa</div></div>
+    <div class="sh"><div class="st" id="tit-cuotas">Cuotas activas — Visa</div></div>
     <div class="tw">
       <table><thead><tr><th>Descripción</th><th>Cuota</th><th class="ar">$ / cuota</th><th>Restan</th><th class="ar">Pendiente</th></tr></thead>
       <tbody id="tb-cuotas"></tbody></table>
@@ -854,6 +854,23 @@ function perLabel(key){
   return `${mn[m]} ${String(y).slice(2)}`;
 }
 
+const MESES_L=["","enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function mesNombre(key){ const m=+key.split("-")[1]; return MESES_L[m][0].toUpperCase()+MESES_L[m].slice(1); }
+function sumMes(key,n){ let [y,m]=key.split("-").map(Number); m+=n; while(m>12){m-=12;y++;} while(m<1){m+=12;y--;} return `${y}-${String(m).padStart(2,"0")}`; }
+function difMeses(a,b){ const [ya,ma]=a.split("-").map(Number),[yb,mb]=b.split("-").map(Number); return (yb-ya)*12+(mb-ma); }
+// Fecha de vencimiento del resumen de un período (vence ~día 8 del mes siguiente)
+function vtoDe(key){
+  const b=BBVA.find(p=>p.key===key);
+  if(b) return b.vto.replace("~","");
+  const sig=sumMes(key,1); return `08 ${perLabel(sig).split(" ")[0]}`;
+}
+// Montos de un período: lo proyectado del resumen + lo cargado/importado
+function montosPer(key){
+  const b=BBVA.find(p=>p.key===key)||{visa:0,mc:0};
+  const nv=nvPorPer()[key]||{v:0,mc:0};
+  return {visa:b.visa+nv.v, mc:b.mc+nv.mc};
+}
+
 // ── NUEVOS POR PERÍODO ────────────────────────
 function nvPorPer(){
   const mp={};
@@ -874,17 +891,21 @@ function nvPorPer(){
 function rInicio(){
   const hoy=currentKey();
   const tf=fijosPorPer(hoy);
-  const bbvaCur=BBVA.find(p=>p.key===hoy)||BBVA[0];const nv=nvPorPer();const nvpH=nv[hoy]||{v:0,mc:0};const egAbr=tf+(bbvaCur.visa+nvpH.v)+(bbvaCur.mc+nvpH.mc);
+  const mHoy=montosPer(hoy);const egAbr=tf+mHoy.visa+mHoy.mc;
+  const mes=mesNombre(hoy), vto=vtoDe(hoy);
+  const hm=document.getElementById("hdr-mes"); if(hm) hm.textContent=`Campiti Joaquín · ${mes} ${hoy.slice(0,4)}`;
+  const at=document.getElementById("alerta-vto-txt");
+  if(at) at.innerHTML=`<strong>Próximo vencimiento ${vto}</strong> (resumen de ${mes.toLowerCase()}): Visa ${$p(mHoy.visa)} · Mastercard ${$p(mHoy.mc)}`;
   const ti=ingresosPorPer(hoy);
   const disp=ti>0?ti-egAbr:null;
   document.getElementById("sg").innerHTML=`
     <div class="sc c-ing"><h3>Ingresos mensuales</h3><div class="am">${ti>0?$p(ti):"Sin cargar"}</div><div class="sb">${ingresos.length} concepto${ingresos.length!==1?"s":""}</div></div>
     <div class="sc c-fijos"><h3>Gastos Fijos / mes</h3><div class="am">${$p(tf)}</div><div class="sb">${fijos.length} conceptos</div></div>
-    <div class="sc c-visa"><h3>Visa — vto. 09 Abr</h3><div class="am">$1.933.662</div><div class="sb">+ U$S 33,46</div></div>
+    <div class="sc c-visa"><h3>Visa — vto. ${vto}</h3><div class="am">${$p(mHoy.visa)}</div><div class="sb">Resumen de ${mes.toLowerCase()}</div></div>
     <div class="sc ${disp===null?"c-master":disp>=0?"c-pos":"c-neg"}">
-      <h3>${disp===null?"Mastercard — vto. 09 Abr":"Disponible Abril"}</h3>
-      <div class="am">${disp===null?"$15.555":$p(disp)}</div>
-      <div class="sb">${disp===null?"Sin dólares":disp>=0?"Después de todos los egresos":"Déficit este mes"}</div>
+      <h3>${disp===null?`Mastercard — vto. ${vto}`:`Disponible ${mes}`}</h3>
+      <div class="am">${disp===null?$p(mHoy.mc):$p(disp)}</div>
+      <div class="sb">${disp===null?`Resumen de ${mes.toLowerCase()}`:disp>=0?"Después de todos los egresos":"Déficit este mes"}</div>
     </div>`;
 }
 
@@ -1015,7 +1036,20 @@ function rVisa(){
 
 // ── RENDER CUOTAS ─────────────────────────────
 function rCuotas(){
-  document.getElementById("tb-cuotas").innerHTML=VISA_TXS.filter(t=>t.c&&t.t&&t.c<t.t).map(t=>{
+  const hoy=currentKey(), avance=difMeses("2026-03",hoy); // el resumen cargado es el de marzo 2026
+  const filas=[];
+  VISA_TXS.filter(t=>t.c&&t.t).forEach(t=>{
+    const c=t.c+avance; if(c<1||c>t.t) return;
+    filas.push({d:t.d,c,t:t.t,m:t.m});
+  });
+  nuevos.filter(g=>g.tar==="visa"&&g.c>1).forEach(g=>{
+    const c=difMeses(g.pi,hoy)+1; if(c<1||c>g.c) return;
+    filas.push({d:g.d,c,t:g.c,m:g.mpc});
+  });
+  const tit=document.getElementById("tit-cuotas"); if(tit) tit.textContent=`Cuotas Visa en el resumen de ${mesNombre(hoy).toLowerCase()}`;
+  const tb=document.getElementById("tb-cuotas");
+  if(!filas.length){ tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px">Sin cuotas este mes</td></tr>`; return; }
+  tb.innerHTML=filas.map(t=>{
     const r=t.t-t.c;
     return `<tr><td>${t.d}</td><td><span class="badge bc">${t.c}/${t.t}</span></td><td class="ar">${$e(t.m)}</td><td><strong>${r}</strong> c.</td><td class="ar" style="color:#d97706;font-weight:800">${$p(r*t.m)}</td></tr>`;
   }).join("");
