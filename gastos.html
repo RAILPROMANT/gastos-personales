@@ -543,6 +543,7 @@ tr:hover td{background:#fafbff}
         <button class="btn bp bs" onclick="importarTodo()" id="btn-importar">✅ Importar todos</button>
       </div>
     </div>
+    <div class="alert ai" id="gmail-resumen" style="display:none"></div>
     <p style="font-size:.83rem;color:#64748b;margin-bottom:14px">Revisá cada consumo, ajustá las cuotas si corresponde, y apretá Importar.</p>
     <div class="tw">
       <table>
@@ -578,7 +579,8 @@ tr:hover td{background:#fafbff}
 <div class="container">
   <div class="alert ai">📧 <span><strong>Fase 2 — Gmail:</strong> Los consumos del Banco Francés llegarán automáticamente. Por ahora cargalos manualmente. El período se asigna según la fecha de cierre de cada tarjeta.</span></div>
   <div class="card">
-    <div class="sh"><div class="st">Nuevos gastos</div><button class="btn bp" onclick="openModalGasto()">＋ Agregar</button></div>
+    <div class="sh"><div class="st">Nuevos gastos</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bo" id="btn-dups" onclick="toggleDups()">🔍 Buscar duplicados</button><button class="btn bp" onclick="openModalGasto()">＋ Agregar</button></div></div>
+    <div id="cont-dups"></div>
     <div id="cont-nuevos"></div>
   </div>
 </div>
@@ -1022,10 +1024,26 @@ function rCuotas(){
 // ── RENDER NUEVOS ─────────────────────────────
 function rNuevos(){
   const c=document.getElementById("cont-nuevos");
+  const grupos=gruposDuplicados();
+  const dupIdx=new Set(grupos.flat());
+  const bd=document.getElementById("btn-dups");
+  if(bd) bd.textContent=verDups?"✕ Cerrar duplicados":`🔍 Buscar duplicados${grupos.length?` (${grupos.length})`:""}`;
+  const cd=document.getElementById("cont-dups");
+  if(cd){
+    if(!verDups) cd.innerHTML="";
+    else if(!grupos.length) cd.innerHTML=`<div class="alert as">✅ <span>No hay gastos repetidos.</span></div>`;
+    else cd.innerHTML=`<div class="alert aw">⚠️ <span>Encontré <strong>${grupos.length}</strong> grupo${grupos.length!==1?"s":""} con la misma tarjeta, fecha y monto. Si es el mismo gasto, borrá uno con ✕. Si de verdad hiciste dos compras iguales ese día, dejalos.</span></div>`+
+      grupos.map(gr=>`<div class="tw" style="margin-bottom:12px;border:1.5px solid #fde047;border-radius:10px"><table><tbody>${gr.map(i=>{const g=nuevos[i];return `<tr>
+        <td>${g.d}<div style="font-size:.7rem;color:#94a3b8">${g.origen==="gmail"?"📧 Gmail"+(g.importado?" · "+g.importado:""):"✍️ Manual"}</div></td>
+        <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
+        <td>${g.fecha}</td><td>${g.c===1?"Único":g.c+" c."}</td>
+        <td class="ar"><strong>${$p(g.mpc*g.c)}</strong></td>
+        <td><button class="bi d" onclick="delNuevo(${i})">✕</button></td></tr>`}).join("")}</tbody></table></div>`).join("");
+  }
   if(!nuevos.length){c.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>Sin nuevos gastos.</p></div>`;return;}
   c.innerHTML=`<div class="tw"><table><thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th>Período</th><th>Cuotas</th><th class="ar">$ / cuota</th><th class="ar">Total</th><th></th></tr></thead>
-  <tbody>${nuevos.map((g,i)=>`<tr>
-    <td>${g.d}</td>
+  <tbody>${nuevos.map((g,i)=>`<tr style="${dupIdx.has(i)?"background:#fefce8":""}">
+    <td>${g.d}${dupIdx.has(i)?' <span style="font-size:.68rem;color:#b45309;font-weight:700">⚠️ repetido</span>':""}</td>
     <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
     <td>${g.fecha}</td>
     <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(g.pi)}</span></td>
@@ -1419,14 +1437,14 @@ async function fetchGmail(){
       alert("✅ Sin consumos nuevos en los últimos 90 días.");
       btn.innerHTML=orig;btn.disabled=false;return;
     }
-    // Filtrar ya importados
-    const vistos=new Set(gmailHist.map(g=>`${g.fecha}|${g.d}|${Math.round(g.mpc*g.c)}`));
-    const nuevosC=data.consumos.filter(c=>!vistos.has(`${c.fecha}|${c.d}|${Math.round(c.monto)}`));
-    if(!nuevosC.length){
-      alert(`Se encontraron ${data.consumos.length} consumos pero todos ya están importados.`);
+    // Filtrar lo que ya está cargado (Gmail o manual)
+    const r=filtrarYaCargados(data.consumos);
+    if(!r.pend.length){
+      alert(`Se encontraron ${data.consumos.length} consumos y todos ya estaban cargados. No hay nada nuevo.`);
       btn.innerHTML=orig;btn.disabled=false;return;
     }
-    gmailPending=nuevosC.map(x=>({...x,cuotas:1}));
+    gmailResumen=`${data.consumos.length} encontrados · ${r.salteados} ya estaban cargados · ${r.pend.length} para revisar`;
+    gmailPending=r.pend.map(x=>({...x,cuotas:1}));
     renderGmailPreview();
     document.getElementById("gmail-paso1").style.display="none";
     document.getElementById("gmail-paso2").style.display="block";
@@ -1454,6 +1472,42 @@ function rGmailStats(){
     <div class="sc c-fijos"><h3>Total importado</h3><div class="am">${total}</div><div class="sb">en ${meses} período${meses!==1?"s":""}</div></div>`;
 }
 
+// ── DUPLICADOS ────────────────────────────────
+let gmailResumen="";
+const normD=d=>String(d||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const totalDe=g=>Math.round(g.monto!=null?g.monto:g.mpc*g.c);
+const claveBase=g=>`${g.tar}|${g.fecha}|${totalDe(g)}`;           // tarjeta + fecha + monto total
+const claveExacta=g=>`${claveBase(g)}|${normD(g.d)}`;              // + descripción
+
+// Separa los consumos que llegan en: ya cargados (se saltean) y pendientes.
+// Si coincide tarjeta+fecha+monto pero la descripción es distinta, lo deja pasar marcado como posible duplicado.
+function filtrarYaCargados(items){
+  const exactas=new Map(), base=new Map();
+  [...nuevos,...gmailHist].forEach(g=>{
+    exactas.set(claveExacta(g),(exactas.get(claveExacta(g))||0)+1);
+    if(!base.has(claveBase(g))) base.set(claveBase(g),g.d);
+  });
+  const pend=[]; let salteados=0;
+  items.forEach(x=>{
+    const k=claveExacta(x);
+    if((exactas.get(k)||0)>0){ exactas.set(k,exactas.get(k)-1); salteados++; return; }
+    const item={...x};
+    if(base.has(claveBase(x))) item.posibleDup=base.get(claveBase(x));
+    pend.push(item);
+  });
+  return {pend,salteados};
+}
+
+// Grupos de gastos ya cargados que coinciden en tarjeta + fecha + monto total
+function gruposDuplicados(){
+  const mp={};
+  nuevos.forEach((g,i)=>{ const k=claveBase(g); (mp[k]=mp[k]||[]).push(i); });
+  return Object.values(mp).filter(a=>a.length>1);
+}
+
+let verDups=false;
+function toggleDups(){ verDups=!verDups; rNuevos(); }
+
 function parsearGmail(){
   const raw = document.getElementById("gmail-json").value.trim();
   const err = document.getElementById("gmail-json-err");
@@ -1468,7 +1522,10 @@ function parsearGmail(){
     const x=items[i];
     if(!x.d||!x.tar||!x.fecha||!x.monto){ err.textContent=`Item ${i+1} le falta campo (d, tar, fecha, monto).`; err.style.display="block"; return; }
   }
-  gmailPending = items.map(x=>({...x, cuotas:x.cuotas||1}));
+  const r=filtrarYaCargados(items);
+  if(!r.pend.length){ err.textContent=`Los ${items.length} consumos ya estaban cargados.`; err.style.display="block"; return; }
+  gmailResumen=`${items.length} pegados · ${r.salteados} ya estaban cargados · ${r.pend.length} para revisar`;
+  gmailPending = r.pend.map(x=>({...x, cuotas:x.cuotas||1}));
   renderGmailPreview();
   document.getElementById("gmail-paso1").style.display="none";
   document.getElementById("gmail-paso2").style.display="block";
@@ -1476,12 +1533,14 @@ function parsearGmail(){
 
 function renderGmailPreview(){
   const body = document.getElementById("gmail-preview-body");
+  const res = document.getElementById("gmail-resumen");
+  if(res){ res.textContent=gmailResumen||""; res.style.display=gmailResumen?"block":"none"; }
   body.innerHTML = gmailPending.map((g,i)=>{
     const per = calcPer(g.fecha, g.tar);
     const mpc = g.monto / (g.cuotas||1);
     return `<tr id="grow-${i}">
       <td style="white-space:nowrap">${g.fecha}</td>
-      <td><strong>${g.d}</strong></td>
+      <td><strong>${g.d}</strong>${g.posibleDup?`<div style="font-size:.7rem;color:#b45309;font-weight:700;margin-top:2px">⚠️ Posible duplicado de "${g.posibleDup}" (mismo día, tarjeta y monto). Si es el mismo, quitalo con ✕</div>`:""}</td>
       <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
       <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(per)}</span></td>
       <td class="ar"><strong>${$p(g.monto)}</strong></td>
@@ -1562,7 +1621,7 @@ function rGmailHist(){
 }
 
 function limpiarGmail(){
-  if(confirm("¿Limpiar el historial de Gmail? Esto NO elimina los consumos ya importados en Proyección.")){
+  if(confirm("¿Limpiar el historial de Gmail? Esto NO elimina los consumos ya importados. (Igual no se van a volver a duplicar: al traer consumos se comparan con todos tus gastos cargados.)")){
     gmailHist=[];sv("gh",gmailHist);rGmailHist();rGmailStats();
   }
 }
