@@ -320,6 +320,11 @@ tr:hover td{background:#fafbff}
 .tag.m{background:var(--gris-cl);color:var(--tinta-2)}
 .tag.u{background:var(--verde-cl);color:var(--verde-osc)}
 .lnk{background:none;border:none;color:var(--azul);font-weight:700;font-size:.78rem;cursor:pointer;padding:0}
+.cbtn{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--borde);background:#fff;color:var(--azul);font-weight:800;font-size:.7rem;padding:2px 8px;border-radius:999px;cursor:pointer;margin-left:6px;vertical-align:1px}
+.cbtn:hover{border-color:var(--azul)}
+.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.qgrid button{padding:12px 0;border-radius:10px;border:1.5px solid var(--borde);background:#fff;font-weight:800;font-size:.95rem;color:var(--tinta);cursor:pointer}
+.qgrid button.on{background:var(--azul);border-color:var(--azul);color:#fff}
 .aviso{background:var(--verde-cl);border:1px solid #CFE6AE;color:#2F4F0B;border-radius:14px;padding:12px 14px;font-size:.83rem;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;line-height:1.45}
 .aviso button{margin-left:auto;background:none;border:none;font-size:1rem;cursor:pointer;color:#2F4F0B}
 @media(max-width:640px){
@@ -627,6 +632,18 @@ tr:hover td{background:#fafbff}
 </div>
 
 <!-- MODAL: Nuevo gasto -->
+<div class="overlay" id="ov-cuotas" onclick="hovc(event,'ov-cuotas')">
+  <div class="modal" style="max-width:420px">
+    <h2>¿En cuántos pagos fue?</h2>
+    <div id="q-info" style="font-size:.85rem;color:#334155;line-height:1.5"></div>
+    <div class="qgrid" id="q-grid"></div>
+    <div class="fr"><label>Otra cantidad</label><input type="number" id="q-otra" min="1" max="48" placeholder="Ej: 24" oninput="qElegir(+this.value||1,true)"></div>
+    <div class="fh ok" id="q-prev" style="padding:9px;background:#f0fdf4;border-radius:8px"></div>
+    <input type="hidden" id="q-idx">
+    <div class="ma"><button class="btn bp" onclick="qGuardar()" style="flex:1">Guardar</button><button class="btn bo" onclick="closeOv('ov-cuotas')" style="flex:1">Cancelar</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-gasto" onclick="hovc(event,'ov-gasto')">
   <div class="modal">
     <h2 id="tit-gasto">💳 Registrar nuevo gasto</h2>
@@ -979,7 +996,8 @@ function rInicio(){
   const nuevosPer=itemsDePer(hoy).filter(x=>x.g.origen!=="resumen"&&x.nro===1).sort((a,b)=>b.g.fecha.localeCompare(a.g.fecha));
   const totN=nuevosPer.filter(x=>monDe(x.g)==="ARS").reduce((s,x)=>s+x.g.mpc,0);
   document.getElementById("ini-consumos").innerHTML=`<h4><span>Gastos nuevos de ${mes.toLowerCase()}</span><span>${$p(totN)}</span></h4>
-    ${nuevosPer.length?`<ul class="lst">${nuevosPer.slice(0,7).map(({g})=>`<li><span class="d">${g.d}<small>${fCorta(g.fecha)} · ${g.tar==="visa"?"Visa":"Master"}${g.c>1?` · ${g.c} cuotas`:""}</small></span><span class="m">${$m(g.mpc,monDe(g))}</span></li>`).join("")}</ul>
+    <div class="sub" style="margin:-4px 0 4px">¿Alguno fue en cuotas? Tocá <span class="cbtn" style="margin:0;cursor:default">1 pago ✎</span> para corregirlo.</div>
+    ${nuevosPer.length?`<ul class="lst">${nuevosPer.slice(0,7).map(({g,i})=>`<li><span class="d">${g.d}<small>${fCorta(g.fecha)} · ${g.tar==="visa"?"Visa":"Master"}${btnCuotas(i)}</small></span><span class="m">${$m(g.mpc,monDe(g))}${g.c>1?`<small style="display:block;font-weight:500;color:var(--gris-2);font-size:.68rem;text-align:right">por cuota</small>`:""}</span></li>`).join("")}</ul>
       <button class="lnk" style="margin-top:8px" onclick="irTab('nuevos')">Ver los ${nuevosPer.length} gastos →</button>`
     :`<div class="sub">Todavía no hay gastos nuevos en este resumen.</div>`}`;
 }
@@ -1114,7 +1132,7 @@ function rNuevos(){
     <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
     <td>${g.fecha}</td>
     <td><span class="badge" style="background:#f0f5ff;color:#1e4d8c">${perLabel(g.pi)}</span></td>
-    <td>${g.c===1?"Único":g.c+" c."}</td>
+    <td style="white-space:nowrap">${btnCuotas(i).replace('margin-left:6px','')}</td>
     <td class="ar">${$m(g.mpc,monDe(g))}</td>
     <td class="ar"><strong>${$m(g.mpc*g.c,monDe(g))}</strong></td>
     <td style="white-space:nowrap"><button class="bi e" onclick="openModalGasto(${i})" title="Editar">✏️</button><button class="bi d" onclick="delNuevo(${i})">✕</button></td>
@@ -1122,6 +1140,7 @@ function rNuevos(){
 }
 
 window.nuevosARS=()=>nuevos.filter(g=>monDe(g)==="ARS");
+window.idxGlobal=g=>nuevos.indexOf(g);
 // ── RENDER TARJETAS ───────────────────────────
 let tjFilPU="ambas";   // filtro pagos únicos
 let tjFilCA="ambas";   // filtro cuotas activas
@@ -1215,7 +1234,7 @@ function rTarjetas(){
     contU.innerHTML=`<div class="tw"><table>
       <thead><tr><th>Descripción</th><th>Tarjeta</th><th>Fecha</th><th class="ar">Monto</th></tr></thead>
       <tbody>${unicos.map(g=>`<tr>
-        <td>${g.d}</td>
+        <td>${g.d}<div style="margin-top:3px">${btnCuotas(window.idxGlobal(g))}</div></td>
         <td><span class="badge ${g.tar==="visa"?"bv":"bm"}">${g.tar==="visa"?"Visa":"Master"}</span></td>
         <td>${g.fecha}</td>
         <td class="ar"><strong>${$p(g.mpc)}</strong></td>
@@ -1376,6 +1395,36 @@ function saveGasto(){
     nuevos.push({d,tar,fecha,pi:calcPer(fecha),c,mpc:monto/c,mon,origen:"manual"});
   }
   sv("ng",nuevos);closeOv("ov-gasto");refrescar();
+}
+// ── CORREGIR CUOTAS DE UN GASTO YA CARGADO ────
+let qSel=1;
+const cuotasTxt=g=>g.c===1?"1 pago":`${g.c} cuotas`;
+const btnCuotas=i=>`<button class="cbtn" onclick="event.stopPropagation();abrirCuotas(${i})" title="Cambiar cantidad de pagos">${cuotasTxt(nuevos[i])} ✎</button>`;
+function abrirCuotas(i){
+  const g=nuevos[i]; const mon=monDe(g);
+  document.getElementById("q-idx").value=i;
+  document.getElementById("q-info").innerHTML=`<strong>${g.d}</strong><br>${fCorta(g.fecha)} · ${g.tar==="visa"?"Visa":"Mastercard"} · total <strong>${$m(g.mpc*g.c,mon)}</strong>`;
+  document.getElementById("q-otra").value="";
+  qElegir(g.c);
+  openOv("ov-cuotas");
+}
+function qElegir(n,desdeInput){
+  qSel=Math.max(1,Math.min(48,n|0));
+  const ops=[1,2,3,4,6,9,12,18];
+  document.getElementById("q-grid").innerHTML=ops.map(o=>`<button class="${o===qSel?"on":""}" onclick="qElegir(${o})">${o===1?"1 pago":o}</button>`).join("");
+  if(!desdeInput&&!ops.includes(qSel)) document.getElementById("q-otra").value=qSel;
+  if(!desdeInput&&ops.includes(qSel)) document.getElementById("q-otra").value="";
+  const g=nuevos[+document.getElementById("q-idx").value]; if(!g) return;
+  const tot=g.mpc*g.c, mon=monDe(g), k=g.pi;
+  document.getElementById("q-prev").innerHTML=qSel===1
+    ?`Pago único de ${$m(tot,mon)} en el resumen de ${mesNombre(k).toLowerCase()}.`
+    :`${qSel} cuotas de <strong>${$m(tot/qSel,mon)}</strong>, de ${perLabel(k)} a ${perLabel(sumMes(k,qSel-1))}.`;
+}
+function qGuardar(){
+  const i=+document.getElementById("q-idx").value, g=nuevos[i]; if(!g) return;
+  const tot=g.mpc*g.c;
+  nuevos[i]={...g,c:qSel,mpc:tot/qSel};
+  sv("ng",nuevos); closeOv("ov-cuotas"); refrescar();
 }
 function refrescar(){ ["rInicio","rNuevos","rProy","rChart","rTarjetas"].forEach(n=>safe(window[n],n)); }
 function delNuevo(i){if(confirm(`¿Eliminar "${nuevos[i].d}"?`)){nuevos.splice(i,1);sv("ng",nuevos);refrescar();}}
