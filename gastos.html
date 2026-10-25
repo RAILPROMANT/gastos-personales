@@ -15,7 +15,14 @@
 <meta name="apple-mobile-web-app-title" content="Gastos">
 <link rel="apple-touch-icon" href="icon-v2.png">
 <link rel="icon" type="image/png" href="icon-v2-192.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="chart.umd.min.js"></script>
+<script>window.Chart||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>')</script>
+<script src="capacitor.js" onerror="this.remove()"></script>
+<script>
+// Firebase: en la app del celu viene adentro (fb/); en la web se baja de Google
+(function(){var b=location.hostname==="localhost"?"fb/":"https://www.gstatic.com/firebasejs/12.19.0/";
+["app","auth","firestore"].forEach(function(n){document.write('<script src="'+b+'firebase-'+n+'-compat.js"><\/script>')});})();
+</script>
 <style>
 /* ══ Tema oscuro estilo "Ordenado": fondo grafito, acento verde lima, tarjetas de color ══ */
 :root{
@@ -487,11 +494,18 @@ textarea{padding:12px 14px}
 <div class="tab-panel" id="panel-config">
 <div class="container">
   <div class="card">
-    <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin-bottom:6px;padding-bottom:8px;border-bottom:2px solid #2E333B">📅 Cierre y vencimiento</div>
+    <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin-bottom:6px;padding-bottom:8px;border-bottom:2px solid #2E333B">☁️ Nube (celu + compu)</div>
+    <div id="cfg-nube"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 6px;padding-top:16px;border-top:2px solid #2E333B">🔔 Avisos</div>
+    <div id="cfg-avisos"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 6px;padding-top:16px;border-top:2px solid #2E333B">📅 Cierre y vencimiento</div>
     <p style="font-size:.78rem;color:#9AA0A8;margin:8px 0 4px">Visa y Mastercard de BBVA cierran y vencen el mismo día. Cuando te llegue el resumen, actualizá las fechas del próximo para que todo se calcule exacto.</p>
     <div id="cfg-fechas"></div>
     <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 6px;padding-top:16px;border-top:2px solid #2E333B">🔒 Seguridad</div>
     <div id="cfg-lock"></div>
+    <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 6px;padding-top:16px;border-top:2px solid #2E333B">🔄 Pasar los datos</div>
+    <div class="cr"><div class="cl">Copiar mis datos<small>Para llevarlos a la app nueva o a otro celu</small></div><button class="btn bs bo" onclick="exportarDatos()">Copiar</button></div>
+    <div class="cr"><div class="cl">Pegar datos copiados<small>Reemplaza lo que hay en esta app</small></div><button class="btn bs bo" onclick="importarDatos()">Pegar</button></div>
     <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 6px;padding-top:16px;border-top:2px solid #2E333B">💵 Dólar</div>
     <div class="cr"><div class="cl">Cotización para estimar en pesos<small>La usa el bloque de dólares de Inicio (el resumen de octubre convirtió a $1.517)</small></div><input type="number" class="ci" style="width:110px" id="cfg-usd" min="1" step="1" onchange="saveConfig()"></div>
     <div style="font-size:.95rem;font-weight:700;color:#F2F2EE;margin:18px 0 12px;padding-top:16px;border-top:2px solid #2E333B">📧 Conexión Gmail</div>
@@ -502,6 +516,7 @@ textarea{padding:12px 14px}
         <div id="cfg-gas-status" style="font-size:.76rem;margin-top:5px;display:none"></div>
       </div>
     </div>
+    <div id="cfg-gmailauto"></div>
     <div class="cr" style="margin-top:20px;padding-top:16px;border-top:2px solid #2E333B">
       <div class="cl">Restablecer gastos fijos<small>Vuelve a los valores originales</small></div>
       <button class="btn bs" style="background:#2A1A18;color:#FF8A7A;border:1.5px solid #5A2E29" onclick="resetFijos()">Restablecer</button>
@@ -550,6 +565,16 @@ textarea{padding:12px 14px}
   <button class="lnk" id="lock-alt" onclick="mostrarPin()">Usar PIN</button>
 </div>
 <div id="toastHost"></div>
+
+<!-- MODAL: Copia de datos -->
+<div class="overlay" id="ov-datos" onclick="hovc(event,'ov-datos')">
+  <div class="modal">
+    <h2 id="d-tit">Copiar mis datos</h2>
+    <p class="note" id="d-txt" style="margin-bottom:12px"></p>
+    <textarea id="d-area" rows="7" style="font-family:monospace;font-size:12px;min-height:140px" spellcheck="false"></textarea>
+    <div class="ma"><button class="btn bp" id="d-btn" style="flex:1"></button><button class="btn bo" onclick="closeOv('ov-datos')" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
 
 <!-- MODAL: Nuevo gasto -->
 <div class="overlay" id="ov-cuotas" onclick="hovc(event,'ov-cuotas')">
@@ -717,7 +742,7 @@ let nuevos  = ld("ng") || [];
 let cfg     = ld("cc") || {gasUrl:""};
 
 function ld(k){try{const v=localStorage.getItem("gc2_"+k);return v?JSON.parse(v):null}catch{return null}}
-function sv(k,v){try{localStorage.setItem("gc2_"+k,JSON.stringify(v))}catch{}}
+function sv(k,v){try{localStorage.setItem("gc2_"+k,JSON.stringify(v))}catch{} if(window.__nubeOn){ try{ nubeMarcar(k); }catch{} }}
 
 const sumFijos  = ()=>fijos.reduce((s,g)=>s+g.m,0);
 
@@ -944,6 +969,8 @@ function rInicio(){
   const max=Math.max(1,...vals.map(v=>v.eg));
   let h="";
   if(!cfg.arranqueVisto) h+=`<div class="aviso">✅ <span><strong>Arrancamos de cero desde el cierre del 1 de octubre.</strong> Quedaron solo las cuotas que te faltan pagar y lo que gastaste después.</span><button onclick="cerrarAviso()" aria-label="Cerrar">✕</button></div>`;
+  if(gmailPendAuto.length){ const tA=gmailPendAuto.filter(x=>(x.mon||"ARS")==="ARS").reduce((s2,x)=>s2+(+x.monto),0);
+    h+=`<button class="urgent" style="background:#172033;border-color:#2A3A5A" onclick="revisarPendientesGmail()"><span class="ico" style="background:var(--blue);color:#0B1220">${ICO.mail}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="eyebrow" style="color:var(--blue)">Gmail · para importar</span><b style="font-size:16px">${gmailPendAuto.length} ${gmailPendAuto.length===1?"gasto nuevo":"gastos nuevos"}${tA?` · ${$p(tA)}`:""}</b></span><span style="color:var(--blue)">${ICO.next}</span></button>`; }
   if(dias>=0&&dias<=5) h+=`<button class="urgent" onclick="go('tarjetas')"><span class="ico" style="background:var(--orange);color:#1E140B">${ICO.warn}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="eyebrow" style="color:var(--orange)">${dias===0?"Vence hoy":dias===1?"Vence mañana":`Vence en ${dias} días`}</span><b style="font-size:16px">Tarjetas · ${$p(tarj)}</b></span></button>`;
   // HERO
   h+=`<button class="heroT" onclick="go('tarjetas')">
@@ -1072,13 +1099,18 @@ function rBuscar(){
 
 // ── BLOQUEO CON HUELLA ────────────────────────
 const lockOn=()=>!!(cfg.lock&&cfg.lock.on);
+// ── APP ANDROID (Capacitor) ───────────────────
+const NATIVO=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+function plugin(n){ try{ if(window.capacitorExports&&capacitorExports.registerPlugin) return capacitorExports.registerPlugin(n); return window.Capacitor&&Capacitor.Plugins?Capacitor.Plugins[n]:null; }catch{ return null; } }
+const Bio=NATIVO?plugin("NativeBiometric"):null;
+const AppN=NATIVO?plugin("App"):null;
 const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const unb64=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0));};
 const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
 async function hashPin(pin){ const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("gastos-campiti:"+pin)); return b64(d); }
 const hayHuella=async()=>{ try{ return !!(window.PublicKeyCredential&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }catch{ return false; } };
 function toast(m){ const h=document.getElementById("toastHost"); h.innerHTML=`<div class="toast" role="status">${m}</div>`; clearTimeout(toast.t); toast.t=setTimeout(()=>h.innerHTML="",2800); }
-let bloqueada=false, ocultoDesde=0;
+let bloqueada=false, ocultoDesde=0, authBusy=false;
 function bloquear(){
   if(!lockOn()) return;
   bloqueada=true; const L=document.getElementById("lock"); L.classList.add("on");
@@ -1090,6 +1122,14 @@ function bloquear(){
 function desbloquear(){ bloqueada=false; document.getElementById("lock").classList.remove("on"); safe(rInicio,"rInicio"); }
 async function desbloquearHuella(){
   if(!cfg.lock||!cfg.lock.cred){ mostrarPin(); return; }
+  if(cfg.lock.cred==="nativo"){
+    if(!Bio){ mostrarPin(); return; }
+    authBusy=true;
+    try{ await Bio.verifyIdentity({reason:"Desbloquear Gastos",title:"Gastos",subtitle:"Usá tu huella o el bloqueo del celu",allowedBiometryTypes:[6,7],maxAttempts:5}); desbloquear(); }
+    catch(e){ document.getElementById("lock-msg").textContent="No se pudo leer la huella. Probá de nuevo o usá tu PIN."; }
+    finally{ setTimeout(()=>{ authBusy=false; ocultoDesde=0; },800); }
+    return;
+  }
   try{
     const c=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:"public-key",id:unb64(cfg.lock.cred),transports:["internal","hybrid"]}],userVerification:"required",timeout:60000}});
     if(c) desbloquear();
@@ -1111,8 +1151,26 @@ function mostrarPin(){
   });
   ins[0].focus();
 }
+if(AppN){
+  try{
+    AppN.addListener("backButton",()=>{
+      if(bloqueada){ AppN.minimizeApp&&AppN.minimizeApp(); return; }
+      const abierto=document.querySelector(".overlay.open");
+      if(abierto){ abierto.classList.remove("open"); return; }
+      if(vista!=="inicio"){ go("inicio",true); return; }
+      AppN.exitApp();
+    });
+    AppN.addListener("appStateChange",({isActive})=>{
+      if(isActive){ try{ autoGmail(false); programarAvisos(); }catch{} }
+      if(!lockOn()||authBusy) return;
+      if(!isActive) ocultoDesde=Date.now();
+      else if(!bloqueada&&ocultoDesde&&Date.now()-ocultoDesde>=(cfg.lock.min??1)*60000) bloquear();
+    });
+  }catch(e){ console.warn(e); }
+}
 document.addEventListener("visibilitychange",()=>{
-  if(!lockOn()) return;
+  if(!document.hidden&&!NATIVO){ try{ autoGmail(false); }catch{} }
+  if(!lockOn()||authBusy) return;
   if(document.hidden) ocultoDesde=Date.now();
   else if(!bloqueada && ocultoDesde && Date.now()-ocultoDesde>=(cfg.lock.min??1)*60000) bloquear();
 });
@@ -1121,7 +1179,12 @@ async function activarBloqueo(){
   if(pin===null) return;
   if(!/^\d{4}$/.test(pin)){ alert("El PIN tiene que ser de 4 números."); return; }
   const lock={on:true,pin:await hashPin(pin),cred:null,min:cfg.lock&&cfg.lock.min!=null?cfg.lock.min:1};
-  if(await hayHuella()){
+  if(Bio){
+    authBusy=true;
+    try{ const r=await Bio.isAvailable({useFallback:true}); if(r&&r.isAvailable){ await Bio.verifyIdentity({reason:"Activar la huella",title:"Gastos",subtitle:"Apoyá el dedo para activar",allowedBiometryTypes:[6,7]}); lock.cred="nativo"; } else toast("El celu no tiene huella configurada. Queda el PIN."); }
+    catch(e){ toast("No se activó la huella. Queda el PIN."); }
+    finally{ setTimeout(()=>{ authBusy=false; ocultoDesde=0; },800); }
+  }else if(await hayHuella()){
     try{
       const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:"Gestión de Gastos"},user:{id:rnd(16),name:"joaquin",displayName:"Joaquín"},
         pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000,attestation:"none"}});
@@ -1132,6 +1195,35 @@ async function activarBloqueo(){
   toast(lock.cred?"Listo: la app se bloquea con huella":"Listo: la app se bloquea con PIN");
 }
 function desactivarBloqueo(){ if(!confirm("¿Sacar el bloqueo de la app?")) return; cfg.lock={on:false,min:cfg.lock?cfg.lock.min:1}; sv("cc",cfg); rCfgLock(); rMenu(); }
+// ── PASAR DATOS ENTRE APPS ────────────────────
+function exportarDatos(){
+  const c={...cfg}; delete c.lock;
+  const txt="GASTOS1:"+btoa(unescape(encodeURIComponent(JSON.stringify({ng:nuevos,ig:ingresos,gf:fijos,gh:gmailHist,cc:c,fecha:new Date().toISOString()}))));
+  document.getElementById("d-tit").textContent="Copiar mis datos";
+  document.getElementById("d-txt").innerHTML="Tocá <strong>Copiar</strong>, abrí la otra app y en <strong>Ajustes → Pegar datos copiados</strong> pegalo.";
+  const a=document.getElementById("d-area"); a.value=txt; a.readOnly=true;
+  const b=document.getElementById("d-btn"); b.textContent="Copiar";
+  b.onclick=async()=>{ try{ await navigator.clipboard.writeText(txt); toast("Copiado. Ahora pegalo en la otra app."); }catch{ a.focus(); a.select(); document.execCommand&&document.execCommand("copy"); toast("Copiado"); } };
+  openOv("ov-datos");
+}
+function importarDatos(){
+  document.getElementById("d-tit").textContent="Pegar datos copiados";
+  document.getElementById("d-txt").innerHTML="Pegá acá lo que copiaste en la otra app (empieza con <strong>GASTOS1:</strong>). Reemplaza los gastos, fijos e ingresos de esta app.";
+  const a=document.getElementById("d-area"); a.value=""; a.readOnly=false;
+  const b=document.getElementById("d-btn"); b.textContent="Recuperar";
+  b.onclick=()=>{
+    try{
+      const t=a.value.trim(); if(!t.startsWith("GASTOS1:")) throw 0;
+      const d=JSON.parse(decodeURIComponent(escape(atob(t.slice(8)))));
+      if(!Array.isArray(d.ng)) throw 0;
+      if(!confirm(`Vas a cargar ${d.ng.length} gastos, ${(d.gf||[]).length} fijos y ${(d.ig||[]).length} ingresos. ¿Seguimos?`)) return;
+      const lock=cfg.lock;
+      sv("ng",d.ng); sv("ig",d.ig||[]); sv("gf",d.gf||[]); sv("gh",d.gh||[]); sv("cc",{...(d.cc||{}),lock});
+      location.reload();
+    }catch(e){ toast("Eso no parece una copia válida. Copiala de nuevo."); }
+  };
+  openOv("ov-datos"); setTimeout(()=>a.focus(),60);
+}
 function setLockMin(v){ cfg.lock=cfg.lock||{}; cfg.lock.min=+v; sv("cc",cfg); }
 function rCfgLock(){
   const el=document.getElementById("cfg-lock"); if(!el) return;
@@ -1577,7 +1669,7 @@ function qGuardar(){
   nuevos[i]={...g,c:qSel,mpc:tot/qSel};
   sv("ng",nuevos); closeOv("ov-cuotas"); refrescar();
 }
-function refrescar(){ ["rInicio","rNuevos","rProy","rChart","rTarjetas","rDolares"].forEach(n=>safe(window[n],n)); }
+function refrescar(){ ["rInicio","rNuevos","rProy","rChart","rTarjetas","rDolares"].forEach(n=>safe(window[n],n)); try{ programarAvisos(); syncRunner(); }catch{} }
 function delNuevo(i){if(confirm(`¿Eliminar "${nuevos[i].d}"?`)){nuevos.splice(i,1);sv("ng",nuevos);refrescar();}}
 
 function openModalFijo(i=-1){
@@ -1887,7 +1979,7 @@ function importarTodo(){
   sv("gh", gmailHist);
   gmailPending=[];
   volverPaso1();
-  refrescar(); rGmailHist(); rGmailStats();
+  refrescar(); rGmailHist(); rGmailStats(); limpiarPendGmail(); syncRunner(); safe(rInicio,"rInicio");
   // mostrar confirmación
   const p2 = document.getElementById("gmail-paso2");
   p2.style.display="none";
@@ -1924,6 +2016,207 @@ function limpiarGmail(){
   }
 }
 
+// ══ AVISOS, GMAIL AUTOMÁTICO Y NUBE ══════════════════════════════════════
+const LN=NATIVO?plugin("LocalNotifications"):null;
+const BR=NATIVO?plugin("BackgroundRunner"):null;
+const RUNNER="ar.joaquin.gastos.gmail";
+
+// ── AVISOS DE VENCIMIENTO ─────────────────────
+const AV_DEF={on:true,hora:"09:00",dias:3,usd:true,cierre:true};
+const avCfg=()=>Object.assign({},AV_DEF,cfg.avisos||{});
+let avSig="";
+function enHora(dia,hhmm){ const [h,m]=hhmm.split(":").map(Number); const d=new Date(dia+"T00:00:00"); d.setHours(h,m,0,0); return d; }
+function listaAvisos(){
+  const a=avCfg(); if(!a.on) return [];
+  const out=[], ahora=new Date(), hoy=currentKey();
+  [hoy,sumMes(hoy,1)].forEach(k=>{
+    const F=fechasPer(k), M=montosPer(k), mes=mesNombre(k).toLowerCase(), tot=M.visa+M.mc;
+    const usd=M.usd>0?` + ${$u(M.usd)}`:"";
+    const vto=new Date(F.v+"T00:00:00");
+    const menos=n=>{const d=new Date(vto);d.setDate(d.getDate()-n);return iso(d);};
+    if(a.dias>0) out.push({at:enHora(menos(a.dias),a.hora),title:`Faltan ${a.dias} días: vence la tarjeta`,body:`Resumen de ${mes}: ${$p(tot)}${usd}. Vence el ${fCorta(F.v)}.`,view:"tarjetas"});
+    out.push({at:enHora(menos(1),a.hora),title:"Mañana vence la tarjeta",body:`Visa ${$p(M.visa)} · Master ${$p(M.mc)}${usd}.`,view:"tarjetas"});
+    out.push({at:enHora(F.v,a.hora),title:"Hoy vence la tarjeta",body:`Resumen de ${mes}: ${$p(tot)}${usd}. Pagalo antes de las 21:30.`,view:"tarjetas"});
+    if(a.cierre) out.push({at:enHora(F.c,a.hora),title:"Hoy cierra la tarjeta",body:`Lo que compres desde mañana entra en el resumen siguiente.`,view:"inicio"});
+    if(a.usd&&M.usd>0){ const d=new Date(F.c+"T00:00:00"); d.setDate(d.getDate()+1); out.push({at:enHora(iso(d),a.hora),title:`Comprá ${$u(Math.ceil(M.usd))}`,body:`Para pagar en dólares el resumen de ${mes} antes del ${fCorta(F.v)} y evitar el dólar tarjeta.`,view:"dolares"}); }
+  });
+  return out.filter(n=>n.at>ahora).sort((x,y)=>x.at-y.at).slice(0,40);
+}
+async function programarAvisos(forzar){
+  if(!LN) return;
+  try{
+    const lista=listaAvisos();
+    const sig=JSON.stringify(lista.map(n=>[+n.at,n.title,n.body]));
+    if(!forzar&&sig===avSig) return;
+    const pend=await LN.getPending();
+    const viejas=(pend.notifications||[]).filter(n=>n.id<1000);
+    if(viejas.length) await LN.cancel({notifications:viejas.map(n=>({id:n.id}))});
+    if(lista.length) await LN.schedule({notifications:lista.map((n,i)=>({id:i+1,title:n.title,body:n.body,largeBody:n.body,channelId:"gastos",smallIcon:"ic_stat_gastos",iconColor:"#C6F36B",schedule:{at:n.at,allowWhileIdle:true},extra:{view:n.view}}))});
+    avSig=sig;
+  }catch(e){ console.warn("avisos",e); }
+}
+async function initAvisos(){
+  if(!LN) return;
+  try{ await LN.createChannel({id:"gastos",name:"Avisos de Gastos",description:"Vencimientos de tarjetas y gastos para importar",importance:4,visibility:1,vibration:true}); }catch(e){}
+  try{ LN.addListener("localNotificationActionPerformed",a=>{ const x=(a&&a.notification&&a.notification.extra)||{}; if(x.view) go(x.view); }); }catch(e){}
+  try{ const p=await LN.checkPermissions(); if(p.display!=="granted") await LN.requestPermissions(); }catch(e){}
+  programarAvisos(true);
+}
+function setAviso(k,v){ cfg.avisos=Object.assign(avCfg(),{[k]:v}); sv("cc",cfg); rCfgAvisos(); programarAvisos(true); }
+async function probarAviso(){
+  if(!LN){ toast("Los avisos funcionan en la app del celu"); return; }
+  try{ await LN.schedule({notifications:[{id:999,title:"Así te avisa Gastos",body:"Los avisos están funcionando.",channelId:"gastos",smallIcon:"ic_stat_gastos",iconColor:"#C6F36B",schedule:{at:new Date(Date.now()+5000),allowWhileIdle:true}}]}); toast("En 5 segundos te llega un aviso"); }
+  catch(e){ toast("No se pudo programar. Revisá el permiso de notificaciones."); }
+}
+function rCfgAvisos(){
+  const el=document.getElementById("cfg-avisos"); if(!el) return;
+  const a=avCfg(), prox=listaAvisos()[0];
+  el.innerHTML=!NATIVO?`<p class="note">Los avisos llegan a la app del celu. En la compu no hace falta configurar nada.</p>`:`
+    <div class="cr"><div class="cl">Avisos de vencimiento<small>${a.on&&prox?`Próximo: ${prox.title.toLowerCase()} · ${prox.at.getDate()}/${prox.at.getMonth()+1} ${a.hora}`:"Apagados"}</small></div>
+      <button class="sw-toggle" role="switch" aria-checked="${a.on}" aria-label="Avisos de vencimiento" onclick="setAviso('on',${!a.on})"></button></div>
+    ${a.on?`<div class="cr"><div class="cl">Hora del aviso</div><input type="time" class="ci" style="width:120px" value="${a.hora}" onchange="setAviso('hora',this.value||'09:00')"></div>
+    <div class="cr"><div class="cl">Primer aviso<small>Días antes del vencimiento</small></div><select class="ci" style="width:150px" onchange="setAviso('dias',+this.value)">${[[0,"Solo 1 día antes"],[2,"2 días antes"],[3,"3 días antes"],[5,"5 días antes"],[7,"1 semana antes"]].map(([v,l])=>`<option value="${v}" ${a.dias==v?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div class="cr"><div class="cl">Aviso del día de cierre</div><button class="sw-toggle" role="switch" aria-checked="${a.cierre}" aria-label="Aviso de cierre" onclick="setAviso('cierre',${!a.cierre})"></button></div>
+    <div class="cr"><div class="cl">Recordatorio de dólares<small>Al día siguiente del cierre, si hay consumos en USD</small></div><button class="sw-toggle" role="switch" aria-checked="${a.usd}" aria-label="Recordatorio de dólares" onclick="setAviso('usd',${!a.usd})"></button></div>
+    <div class="cr"><div class="cl">Probar</div><button class="btn bs bo" onclick="probarAviso()">Mandar aviso de prueba</button></div>`:""}`;
+}
+
+// ── GMAIL AUTOMÁTICO ──────────────────────────
+let gmailPendAuto=[];
+try{ gmailPendAuto=JSON.parse(localStorage.getItem("gc2_gpend")||"[]"); }catch{ gmailPendAuto=[]; }
+let gmailRevisando=false;
+async function autoGmail(forzar){
+  if(!cfg.gasUrl||gmailRevisando) return;
+  if(cfg.gmailAuto===false&&!forzar) return;
+  const ult=+(localStorage.getItem("gc2_gauto")||0);
+  if(!forzar&&Date.now()-ult<15*60000) return;
+  gmailRevisando=true;
+  try{
+    const desde=cfg.inicio||INICIO, dias=Math.max(7,-diasHasta(desde)+2);
+    const resp=await fetch(cfg.gasUrl+"?dias="+dias,{redirect:"follow"});
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error||"error");
+    try{ localStorage.setItem("gc2_gauto",String(Date.now())); }catch{}
+    cfg.gasUltima=data.generado;
+    const r=filtrarYaCargados(data.consumos||[]);
+    gmailPendAuto=r.pend.map(x=>({...x,cuotas:1}));
+    try{ localStorage.setItem("gc2_gpend",JSON.stringify(gmailPendAuto)); }catch{}
+    safe(rInicio,"rInicio");
+  }catch(e){ console.warn("gmail auto",e); }
+  finally{ gmailRevisando=false; }
+}
+function revisarPendientesGmail(){
+  if(!gmailPendAuto.length){ go("gmail"); return; }
+  gmailResumen=`${gmailPendAuto.length} ${gmailPendAuto.length===1?"gasto nuevo encontrado":"gastos nuevos encontrados"} en Gmail`;
+  gmailPending=gmailPendAuto.map(x=>({...x}));
+  go("gmail");
+  renderGmailPreview();
+  document.getElementById("gmail-paso1").style.display="none";
+  document.getElementById("gmail-paso2").style.display="block";
+}
+function limpiarPendGmail(){ const r=filtrarYaCargados(gmailPendAuto.map(x=>({...x}))); gmailPendAuto=r.pend; try{ localStorage.setItem("gc2_gpend",JSON.stringify(gmailPendAuto)); }catch{} }
+// Le pasa al chequeo en segundo plano (APK) qué ya está cargado
+function syncRunner(){
+  if(!BR||!cfg.gasUrl) return;
+  try{
+    const conocidos=[...nuevos.map(g=>`${g.tar}|${g.fecha}|${Math.round(g.mpc*g.c)}`),...IGNORAR.map(x=>`${x.tar}|${x.fecha}|${Math.round(x.monto)}`),...gmailHist.map(g=>`${g.tar}|${g.fecha}|${Math.round(g.mpc*g.c)}`)];
+    BR.dispatchEvent({label:RUNNER,event:"sync",details:{url:cfg.gasUrl,desde:cfg.inicio||INICIO,on:cfg.gmailAuto!==false,conocidos}}).catch(()=>{});
+  }catch(e){}
+}
+function setGmailAuto(v){ cfg.gmailAuto=v; sv("cc",cfg); rCfgGmailAuto(); syncRunner(); if(v) autoGmail(true); }
+function rCfgGmailAuto(){
+  const el=document.getElementById("cfg-gmailauto"); if(!el) return;
+  const on=cfg.gmailAuto!==false;
+  el.innerHTML=`<div class="cr"><div class="cl">Revisar Gmail solo<small>${on?(NATIVO?"Al abrir la app y cada 30 min en segundo plano; te avisa si hay gastos para importar":"Cada vez que abrís la app y cada 15 min"):"Apagado: solo cuando tocás el botón"}</small></div>
+    <button class="sw-toggle" role="switch" aria-checked="${on}" aria-label="Revisar Gmail solo" onclick="setGmailAuto(${!on})"></button></div>`;
+}
+
+// ── NUBE (Firebase, mismo proyecto que Ordenado) ──
+const FB_CONFIG={apiKey:"AIzaSyDVd0ucJpBozK7ScxAkT8wLcV6AYFXOkU0",authDomain:"ordenado-5ad6f.firebaseapp.com",projectId:"ordenado-5ad6f",storageBucket:"ordenado-5ad6f.firebasestorage.app",messagingSenderId:"1091168953368",appId:"1:1091168953368:web:5074b6625057bbd47b0f6d"};
+let fbAuth=null,fbDb=null,fbUser=null,nubeUnsub=null,nubeEstado="",nubeT=null,aplicandoNube=false,nubeSigEnviada="";
+const DEV=(()=>{ try{ let d=localStorage.getItem("gc2_dev"); if(!d){ d=Math.random().toString(36).slice(2,10); localStorage.setItem("gc2_dev",d); } return d; }catch{ return "x"; } })();
+const nubeDoc=()=>fbDb.doc("users/"+fbUser.uid+"/gastos/estado");
+function paqueteNube(){ const c={...cfg}; delete c.lock; delete c.gasUltima; delete c.arranqueVisto; return {ng:nuevos,ig:ingresos,gf:fijos,gh:gmailHist,cc:c}; }
+function nubeMarcar(k){
+  if(aplicandoNube||!fbUser||!["ng","ig","gf","gh","cc"].includes(k)) return;
+  clearTimeout(nubeT); nubeT=setTimeout(nubeSubir,1200);
+}
+async function nubeSubir(){
+  if(!fbUser||!fbDb) return;
+  const json=JSON.stringify(paqueteNube());
+  if(json===nubeSigEnviada) return;
+  const ts=Date.now();
+  try{ await nubeDoc().set({json,ts,dev:DEV}); nubeSigEnviada=json; localStorage.setItem("gc2_nts",String(ts)); nubeEstado="ok"; }
+  catch(e){ nubeEstado=e&&e.code==="permission-denied"?"permiso":"error"; console.warn("nube",e); }
+  rCfgNube();
+}
+function nubeAplicar(d){
+  try{
+    const p=JSON.parse(d.json);
+    aplicandoNube=true;
+    nuevos=p.ng||[]; ingresos=p.ig||[]; fijos=p.gf||fijos; gmailHist=p.gh||[];
+    const local={lock:cfg.lock,gasUltima:cfg.gasUltima,arranqueVisto:cfg.arranqueVisto};
+    cfg=Object.assign({},p.cc||{},local);
+    sv("ng",nuevos); sv("ig",ingresos); sv("gf",fijos); sv("gh",gmailHist); sv("cc",cfg);
+    localStorage.setItem("gc2_nts",String(d.ts||Date.now()));
+    nubeSigEnviada=JSON.stringify(paqueteNube());
+  }catch(e){ console.warn("nube aplicar",e); }
+  finally{ aplicandoNube=false; }
+  ["rInicio","rNuevos","rProy","rChart","rTarjetas","rDolares","rFijos","rIngresos","rGmailHist","loadCfg"].forEach(n=>safe(window[n],n));
+  limpiarPendGmail(); syncRunner(); programarAvisos();
+}
+function nubeIniciar(){
+  if(!window.firebase||!FB_CONFIG) return;
+  try{
+    firebase.initializeApp(FB_CONFIG); fbAuth=firebase.auth(); fbAuth.languageCode="es"; fbDb=firebase.firestore();
+    try{ fbDb.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+    fbAuth.onAuthStateChanged(u=>{ fbUser=u||null; if(nubeUnsub){ try{nubeUnsub()}catch{} nubeUnsub=null; } if(fbUser) nubeConectar(); rCfgNube(); });
+  }catch(e){ console.warn("firebase",e); }
+}
+function nubeConectar(){
+  let primero=true;
+  nubeUnsub=nubeDoc().onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites) return;
+    const localTs=+(localStorage.getItem("gc2_nts")||0);
+    if(!snap.exists){ if(primero){ primero=false; nubeSubir(); } return; }
+    const d=snap.data();
+    if(primero){
+      primero=false;
+      // Primera vez en este dispositivo: si la nube tiene datos, los trae; si no, sube los de acá.
+      if(!localTs||d.ts>localTs) nubeAplicar(d); else nubeSubir();
+    }else if(d.dev!==DEV&&d.ts>localTs) nubeAplicar(d);
+    nubeEstado="ok"; rCfgNube();
+  },e=>{ nubeEstado=e&&e.code==="permission-denied"?"permiso":"error"; rCfgNube(); });
+}
+const AUTH_ERR={"auth/invalid-credential":"El mail o la contraseña no coinciden.","auth/wrong-password":"La contraseña no coincide.","auth/user-not-found":"No hay una cuenta con ese mail.","auth/email-already-in-use":"Ya existe una cuenta con ese mail: tocá Entrar.","auth/weak-password":"La contraseña tiene que tener al menos 6 caracteres.","auth/invalid-email":"Ese mail no es válido.","auth/network-request-failed":"Sin conexión. Probá de nuevo.","auth/too-many-requests":"Demasiados intentos. Esperá un rato."};
+async function nubeEntrar(tipo){
+  const em=(document.getElementById("nb-mail").value||"").trim(), pw=document.getElementById("nb-pass").value||"";
+  try{
+    if(tipo==="olvide"){ if(!em) return toast("Escribí tu mail arriba"); await fbAuth.sendPasswordResetEmail(em); return toast("Te mandamos un mail para cambiar la contraseña"); }
+    if(!em||!pw) return toast("Completá mail y contraseña");
+    if(tipo==="crear") await fbAuth.createUserWithEmailAndPassword(em,pw); else await fbAuth.signInWithEmailAndPassword(em,pw);
+    toast("Listo: tus gastos se sincronizan");
+  }catch(e){ toast(AUTH_ERR[e&&e.code]||"No se pudo: "+((e&&e.code)||"error")); }
+}
+function nubeSalir(){ if(!confirm("¿Cerrar sesión? Tus datos quedan en este dispositivo.")) return; try{ fbAuth.signOut(); }catch{} }
+function rCfgNube(){
+  const el=document.getElementById("cfg-nube"); if(!el) return;
+  if(!window.firebase||!fbAuth){ el.innerHTML=`<p class="note">No se pudo cargar la conexión con la nube. Revisá internet y abrí la app de nuevo.</p>`; return; }
+  if(fbUser){
+    const est=nubeEstado==="permiso"?`<span style="color:var(--red)">La nube no dejó guardar (permisos de Firebase)</span>`:nubeEstado==="error"?`<span style="color:var(--orange)">Sin conexión: se sube cuando vuelva</span>`:`<span style="color:var(--lime)">Sincronizado</span>`;
+    el.innerHTML=`<div class="cr"><div class="cl">${fbUser.email}<small>${est}</small></div><button class="btn bs bo" onclick="nubeSalir()">Cerrar sesión</button></div>
+      <p class="note" style="margin-top:6px">Entrá con este mismo mail en el celu y en la compu: los gastos, fijos, ingresos y ajustes quedan iguales en los dos. La huella y el PIN son de cada dispositivo.</p>`;
+  }else{
+    el.innerHTML=`<p class="note" style="margin:4px 0 10px">Usá la misma cuenta que en Ordenado. Así ves y cargás tus gastos desde el celu y desde la compu.</p>
+      <div class="fr"><label for="nb-mail">Mail</label><input id="nb-mail" type="email" autocomplete="username" placeholder="tu@mail.com"></div>
+      <div class="fr"><label for="nb-pass">Contraseña</label><input id="nb-pass" type="password" autocomplete="current-password"></div>
+      <div class="ma" style="margin-top:4px"><button class="btn bp" style="flex:1" onclick="nubeEntrar('entrar')">Entrar</button><button class="btn bo" style="flex:1" onclick="nubeEntrar('crear')">Crear cuenta</button></div>
+      <button class="lnk" style="margin-top:8px" onclick="nubeEntrar('olvide')">Me olvidé la contraseña</button>`;
+  }
+}
+
+window.__nubeOn=true;
+
 // ── OVERLAY UTILS ─────────────────────────────
 function openOv(id){document.getElementById(id).classList.add("open")}
 function closeOv(id){document.getElementById(id).classList.remove("open")}
@@ -1959,6 +2252,15 @@ function initApp(){
   safe(rCfgLock,"rCfgLock");
   safe(rDolares,"rDolares");
   safe(renderTop,"renderTop");
+  safe(nubeIniciar,"nubeIniciar");
+  safe(rCfgNube,"rCfgNube");
+  safe(rCfgAvisos,"rCfgAvisos");
+  safe(rCfgGmailAuto,"rCfgGmailAuto");
+  safe(initAvisos,"initAvisos");
+  safe(syncRunner,"syncRunner");
+  limpiarPendGmail(); safe(rInicio,"rInicio");
+  setTimeout(()=>autoGmail(false),1500);
+  setInterval(()=>autoGmail(false),15*60000);
 }
 
 if(document.readyState==="loading"){
@@ -1968,7 +2270,7 @@ if(document.readyState==="loading"){
 }
 
 // ── PWA: registrar service worker ─────────────
-if("serviceWorker" in navigator){
+if("serviceWorker" in navigator && !NATIVO){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("sw.js").then(reg=>{
       // Chequear updates cada vez que abrís la app
