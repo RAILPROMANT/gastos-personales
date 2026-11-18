@@ -212,6 +212,12 @@ textarea{padding:12px 14px}
 .mitem{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px;border-radius:20px;border:0;background:var(--surface);color:var(--fg);text-align:left;font-weight:800;font-size:15px;min-height:96px}
 .mitem .ico{width:40px;height:40px;border-radius:12px}
 .mitem small{font-size:12px;color:var(--muted);font-weight:600}
+.vozmic{width:96px;height:96px;border-radius:32px;border:0;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;margin:6px auto 0;box-shadow:0 10px 30px rgba(198,243,107,.25)}
+.vozmic svg{width:44px;height:44px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vozmic.on{animation:pulso 1.1s ease-in-out infinite;background:#DDFA9C}
+@keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(198,243,107,.45)}50%{box-shadow:0 0 0 18px rgba(198,243,107,0)}}
+@media (prefers-reduced-motion:reduce){.vozmic.on{animation:none;outline:3px solid var(--lime);outline-offset:4px}}
+#voz-txt{text-align:center;font-size:17px;font-weight:700;margin:14px 0 4px;min-height:24px;color:#C9CDD3}
 .search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 14px;min-height:54px}
 .search svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;flex-shrink:0}
 .search input{flex:1;border:0;background:none;font-size:17px;font-weight:600;color:var(--fg);outline:none;min-width:0;min-height:50px}
@@ -543,6 +549,20 @@ textarea{padding:12px 14px}
   <div class="modal">
     <h2>Más secciones</h2>
     <div class="menu" id="mas-menu"></div>
+  </div>
+</div>
+
+<!-- VOZ -->
+<div class="overlay" id="ov-voz" onclick="hovc(event,'ov-voz')">
+  <div class="modal" style="min-height:70vh">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Preguntale a Gastos</h2>
+      <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:700">Hablar<button class="sw-toggle" id="voz-hab" role="switch" aria-checked="true" aria-label="Responder en voz alta" onclick="setVozHabla()"></button></span></div>
+    <button class="vozmic" id="voz-mic" onclick="vozEscuchar()" aria-label="Hablar"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button>
+    <div id="voz-txt" aria-live="polite">Tocá el micrófono y preguntá</div>
+    <div id="voz-res" aria-live="polite"></div>
+    <form onsubmit="event.preventDefault();const i=document.getElementById('voz-in');if(i.value.trim()){vozResponder(i.value);i.value=''}" class="search" style="margin-top:14px"><input id="voz-in" placeholder="…o escribí la pregunta" autocomplete="off" aria-label="Escribir pregunta"></form>
+    <p class="note" style="margin:14px 2px 8px">Probá con:</p>
+    <div class="chips" id="voz-ej"></div>
   </div>
 </div>
 
@@ -884,6 +904,7 @@ function cerrarAviso(){ cfg.arranqueVisto=true; sv("cc",cfg); rInicio(); }
 // ── NAVEGACIÓN ────────────────────────────────
 const ICO={
   back:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>',
   card:'<svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>',
   usd:'<svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.5-2-2.5 0-4 1.2-4 3s1.6 2.6 4 3.2 4.5 1.4 4.5 3.3-1.8 3.3-4.5 3.3c-2.2 0-3.9-.8-4.7-2.2"/></svg>',
@@ -914,11 +935,12 @@ function renderTop(){
     const d=new Date(), DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
     top.innerHTML=`<div class="ttl"><small>${DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)} ${d.getDate()} de ${MESES_L[d.getMonth()+1]}</small><h1>${saludo}, Joaquín</h1></div>
       <button class="iconbtn" onclick="abrirBuscar()" aria-label="Buscar">${ICO.search}</button>
-      <div class="avatar" aria-hidden="true">J</div>`;
+      <button class="iconbtn" onclick="abrirVoz()" aria-label="Preguntar por voz" style="background:var(--lime);color:var(--ink)">${ICO.mic}</button>`;
   }else{
     top.innerHTML=`<button class="iconbtn" onclick="history.length>1&&history.state&&history.state.v?history.back():go('inicio')" aria-label="Volver">${ICO.back}</button>
       <div class="ttl"><small>${v.s||""}</small><h1>${v.t||""}</h1></div>
-      <button class="iconbtn" onclick="abrirBuscar()" aria-label="Buscar">${ICO.search}</button>`;
+      <button class="iconbtn" onclick="abrirBuscar()" aria-label="Buscar">${ICO.search}</button>
+      <button class="iconbtn" onclick="abrirVoz()" aria-label="Preguntar por voz">${ICO.mic}</button>`;
   }
 }
 function go(n,desdeHistorial){
@@ -927,7 +949,7 @@ function go(n,desdeHistorial){
   vista=n;
   document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id===`panel-${n}`));
   document.querySelectorAll(".navb[data-go]").forEach(b=>{ if(b.dataset.go===n) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  ["ov-mas","ov-buscar"].forEach(id=>closeOv(id));
+  ["ov-mas","ov-buscar","ov-voz"].forEach(id=>closeOv(id)); try{ vozParar(); }catch{}
   renderTop();
   if(n==="inicio") safe(rInicio,"rInicio");
   if(n==="proyeccion"){ safe(rProy,"rProy"); safe(rChart,"rChart"); }
@@ -1010,7 +1032,7 @@ function rInicio(){
     <span class="note" style="margin:0">Fijos + tarjetas por mes. ${vals[1]?`${perLabel(vals[1].k)}: ${$p(vals[1].eg)}.`:""}</span>
   </button>`;
   // accesos rápidos
-  h+=`<div class="quick"><button class="qbtn" onclick="go('gmail')">${ICO.mail}Traer de Gmail</button><button class="qbtn" onclick="abrirBuscar()">${ICO.search}Buscar gasto</button></div>`;
+  h+=`<div class="quick"><button class="qbtn" onclick="go('gmail')">${ICO.mail}Traer de Gmail</button><button class="qbtn" onclick="abrirBuscar()">${ICO.search}Buscar gasto</button><button class="qbtn" style="grid-column:1/-1;border-color:var(--lime);color:var(--lime)" onclick="abrirVoz()">${ICO.mic}Preguntar por voz</button></div>`;
   document.getElementById("home").innerHTML=h;
 }
 
@@ -2173,20 +2195,48 @@ function nubeIniciar(){
     fbAuth.onAuthStateChanged(u=>{ fbUser=u||null; if(nubeUnsub){ try{nubeUnsub()}catch{} nubeUnsub=null; } if(fbUser) nubeConectar(); rCfgNube(); });
   }catch(e){ console.warn("firebase",e); }
 }
+// Junta lo de este dispositivo con lo de la nube sin perder nada (se usa al conectar)
+function nubeCombinar(remoto){
+  const L=paqueteNube(), R=remoto||{};
+  const kG=g=>`${g.tar}|${g.fecha}|${Math.round((+g.mpc||0)*(+g.c||1))}|${normD(g.d)}`;
+  const unir=(rem,loc,key)=>{ const out=[...(rem||[])], ks=new Set(out.map(key)); (loc||[]).forEach(x=>{ if(!ks.has(key(x))){ out.push(x); ks.add(key(x)); } }); return out; };
+  const nom=x=>normD(x.n);
+  return {
+    ng:unir(R.ng,L.ng,kG),
+    ig:unir(R.ig,L.ig,nom),
+    gf:(R.gf&&R.gf.length?unir(R.gf,L.gf,nom):L.gf),
+    gh:unir(R.gh,L.gh,kG),
+    cc:Object.assign({},L.cc,R.cc,{gasUrl:(R.cc&&R.cc.gasUrl)||L.cc.gasUrl||""})
+  };
+}
 function nubeConectar(){
   let primero=true;
   nubeUnsub=nubeDoc().onSnapshot(snap=>{
     if(snap.metadata.hasPendingWrites) return;
-    const localTs=+(localStorage.getItem("gc2_nts")||0);
-    if(!snap.exists){ if(primero){ primero=false; nubeSubir(); } return; }
+    if(!snap.exists){ if(primero){ primero=false; nubeSigEnviada=""; nubeSubir(); } return; }
     const d=snap.data();
     if(primero){
       primero=false;
-      // Primera vez en este dispositivo: si la nube tiene datos, los trae; si no, sube los de acá.
-      if(!localTs||d.ts>localTs) nubeAplicar(d); else nubeSubir();
-    }else if(d.dev!==DEV&&d.ts>localTs) nubeAplicar(d);
-    nubeEstado="ok"; rCfgNube();
+      // Primera vez en este dispositivo: combina lo de acá con lo de la nube y sube el resultado.
+      let rem={}; try{ rem=JSON.parse(d.json||"{}"); }catch{}
+      const comb=nubeCombinar(rem), cj=JSON.stringify(comb);
+      if(cj!==d.json) nubeAplicar({json:cj,ts:Date.now()}); else nubeAplicar(d);
+      nubeSigEnviada=""; nubeSubir();
+    }else if(d.json&&d.json!==JSON.stringify(paqueteNube())){
+      // Cambio hecho en otro dispositivo (o desde acá mismo antes): traerlo
+      if(d.dev!==DEV||d.json!==nubeSigEnviada) nubeAplicar(d);
+    }
+    nubeEstado="ok"; try{ localStorage.setItem("gc2_nsync",String(Date.now())); }catch{} rCfgNube();
   },e=>{ nubeEstado=e&&e.code==="permission-denied"?"permiso":"error"; rCfgNube(); });
+}
+async function nubeAhora(){
+  if(!fbUser) return;
+  try{
+    const snap=await nubeDoc().get({source:"server"});
+    if(snap.exists){ const d=snap.data(); let rem={}; try{ rem=JSON.parse(d.json||"{}"); }catch{} const cj=JSON.stringify(nubeCombinar(rem)); if(cj!==JSON.stringify(paqueteNube())) nubeAplicar({json:cj,ts:Date.now()}); }
+    nubeSigEnviada=""; await nubeSubir(); localStorage.setItem("gc2_nsync",String(Date.now()));
+    toast("Sincronizado"); rCfgNube();
+  }catch(e){ toast("No se pudo sincronizar: "+((e&&e.code)||"sin conexión")); }
 }
 const AUTH_ERR={"auth/invalid-credential":"El mail o la contraseña no coinciden.","auth/wrong-password":"La contraseña no coincide.","auth/user-not-found":"No hay una cuenta con ese mail.","auth/email-already-in-use":"Ya existe una cuenta con ese mail: tocá Entrar.","auth/weak-password":"La contraseña tiene que tener al menos 6 caracteres.","auth/invalid-email":"Ese mail no es válido.","auth/network-request-failed":"Sin conexión. Probá de nuevo.","auth/too-many-requests":"Demasiados intentos. Esperá un rato."};
 async function nubeEntrar(tipo){
@@ -2204,7 +2254,9 @@ function rCfgNube(){
   if(!window.firebase||!fbAuth){ el.innerHTML=`<p class="note">No se pudo cargar la conexión con la nube. Revisá internet y abrí la app de nuevo.</p>`; return; }
   if(fbUser){
     const est=nubeEstado==="permiso"?`<span style="color:var(--red)">La nube no dejó guardar (permisos de Firebase)</span>`:nubeEstado==="error"?`<span style="color:var(--orange)">Sin conexión: se sube cuando vuelva</span>`:`<span style="color:var(--lime)">Sincronizado</span>`;
-    el.innerHTML=`<div class="cr"><div class="cl">${fbUser.email}<small>${est}</small></div><button class="btn bs bo" onclick="nubeSalir()">Cerrar sesión</button></div>
+    const ult=+(localStorage.getItem("gc2_nsync")||0), hh=ult?new Date(ult):null;
+    el.innerHTML=`<div class="cr"><div class="cl">${fbUser.email}<small>${est}${hh?` · última vez ${hh.getDate()}/${hh.getMonth()+1} ${String(hh.getHours()).padStart(2,"0")}:${String(hh.getMinutes()).padStart(2,"0")}`:""}</small></div><button class="btn bs bo" onclick="nubeSalir()">Cerrar sesión</button></div>
+      <div class="cr"><div class="cl">Sincronizar ahora<small>Trae lo del otro dispositivo y sube lo de acá</small></div><button class="btn bs bp" onclick="nubeAhora()">Sincronizar</button></div>
       <p class="note" style="margin-top:6px">Entrá con este mismo mail en el celu y en la compu: los gastos, fijos, ingresos y ajustes quedan iguales en los dos. La huella y el PIN son de cada dispositivo.</p>`;
   }else{
     el.innerHTML=`<p class="note" style="margin:4px 0 10px">Usá la misma cuenta que en Ordenado. Así ves y cargás tus gastos desde el celu y desde la compu.</p>
@@ -2216,6 +2268,190 @@ function rCfgNube(){
 }
 
 window.__nubeOn=true;
+
+// ══ PREGUNTAS POR VOZ ════════════════════════════════════════════════════
+// Entiende frases armadas (no conversación libre) y responde en pantalla y en voz alta.
+const SR=NATIVO?plugin("SpeechRecognition"):null;
+const TTS=NATIVO?plugin("SpeechSynthesis"):null;
+let vozEscuchando=false, vozRec=null, vozHablar=true;
+try{ vozHablar=localStorage.getItem("gc2_vozhabla")!=="0"; }catch{}
+
+const VOZ_EJEMPLOS=["¿Cuánto vence este mes?","¿Cuánto gasté en Uber?","¿Cuántos dólares tengo que comprar?","¿Cuánto me queda disponible?","¿Cuándo cierra la tarjeta?","Cargá 15 mil en YPF con la Visa"];
+
+function abrirVoz(){
+  closeOv("ov-buscar"); closeOv("ov-mas");
+  document.getElementById("voz-res").innerHTML="";
+  document.getElementById("voz-txt").textContent="Tocá el micrófono y preguntá";
+  document.getElementById("voz-ej").innerHTML=VOZ_EJEMPLOS.map(e=>`<button onclick="vozResponder(${JSON.stringify(e).replace(/"/g,"&quot;")})">${e}</button>`).join("");
+  document.getElementById("voz-hab").setAttribute("aria-checked",vozHablar);
+  openOv("ov-voz");
+  setTimeout(vozEscuchar,250);
+}
+function setVozHabla(){ vozHablar=!vozHablar; try{ localStorage.setItem("gc2_vozhabla",vozHablar?"1":"0"); }catch{} document.getElementById("voz-hab").setAttribute("aria-checked",vozHablar); if(!vozHablar) vozCallar(); }
+function vozEstado(on){ vozEscuchando=on; const b=document.getElementById("voz-mic"); if(b) b.classList.toggle("on",on); document.getElementById("voz-txt").textContent=on?"Te escucho…":(document.getElementById("voz-txt").textContent==="Te escucho…"?"Tocá el micrófono y preguntá":document.getElementById("voz-txt").textContent); }
+
+async function vozEscuchar(){
+  if(vozEscuchando){ vozParar(); return; }
+  vozCallar();
+  // App del celu: reconocimiento nativo de Android
+  if(SR){
+    try{
+      const p=await SR.checkPermissions().catch(()=>({}));
+      if(!p||p.speechRecognition!=="granted"){ const r=await SR.requestPermissions(); if(r.speechRecognition!=="granted"){ vozMsg("Necesito permiso para usar el micrófono."); return; } }
+      vozEstado(true);
+      const r=await SR.start({language:"es-AR",maxResults:3,partialResults:false,popup:false});
+      vozEstado(false);
+      const t=(r&&r.matches&&r.matches[0])||"";
+      if(t) vozResponder(t); else vozMsg("No te escuché. Tocá el micrófono y probá de nuevo.");
+    }catch(e){ vozEstado(false); vozMsg("No te escuché. Tocá el micrófono y probá de nuevo."); }
+    return;
+  }
+  // Compu / Chrome: Web Speech API
+  const W=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!W){ vozMsg("Este navegador no tiene reconocimiento de voz. Escribí la pregunta abajo."); return; }
+  vozRec=new W(); vozRec.lang="es-AR"; vozRec.interimResults=true; vozRec.maxAlternatives=1;
+  let final="";
+  vozRec.onresult=e=>{ let t=""; for(const r of e.results){ t+=r[0].transcript; if(r.isFinal) final=t; } document.getElementById("voz-txt").textContent="“"+t+"”"; };
+  vozRec.onerror=()=>{ vozEstado(false); };
+  vozRec.onend=()=>{ vozEstado(false); if(final) vozResponder(final); };
+  try{ vozRec.start(); vozEstado(true); }catch(e){ vozMsg("No pude usar el micrófono."); }
+}
+function vozParar(){ try{ if(SR) SR.stop(); }catch{} try{ vozRec&&vozRec.stop(); }catch{} vozEstado(false); }
+function vozMsg(t){ document.getElementById("voz-txt").textContent=t; }
+function vozCallar(){ try{ if(TTS) TTS.cancel&&TTS.cancel(); }catch{} try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch{} }
+function vozDecir(t){
+  if(!vozHablar) return;
+  const limpio=t.replace(/U\$S/g,"dólares ").replace(/\$/g,"").replace(/·/g,",");
+  try{
+    if(TTS){ TTS.speak({text:limpio,language:"es-AR",rate:1.0}).catch(()=>{}); return; }
+    if(window.speechSynthesis){ const u=new SpeechSynthesisUtterance(limpio); u.lang="es-AR"; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+  }catch{}
+}
+
+// ── Entender la frase ──
+const VSIN=t=>sinAcentos(t).replace(/[¿?¡!;:]/g," ").replace(/(?<!\d)[.,]|[.,](?!\d)/g," ").replace(/\s+/g," ").trim();
+const VOZ_ALIAS={"mercado libre":"mercadolib|meli","mercadolibre":"mercadolib|meli","mercado pago":"merpago","luz":"epe","gas":"litoral gas","nafta":"ypf|opessa|est de serv|shell|axion|puma","combustible":"ypf|opessa|est de serv|shell|axion|puma","peaje":"corredor","peajes":"corredor","youtube":"youtube","google":"google","celular":"personal|claro|movistar","internet":"ultrafibra|personal","gimnasio":"gym","entradas":"turboentrada"};
+function vozNumero(t){
+  // "15 mil", "15.000", "1,5 millones", "quince mil", "20 lucas"
+  const pal={un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,quince:15,veinte:20,treinta:30,cuarenta:40,cincuenta:50,cien:100,ciento:100,doscientos:200,trescientos:300,quinientos:500};
+  let s=" "+t+" ";
+  Object.entries(pal).forEach(([k,v])=>{ s=s.replace(new RegExp(" "+k+" ","g")," "+v+" "); });
+  const m=s.match(/(\d+(?:[.,]\d+)*)\s*(millones|millon|mil|lucas|luca|k)?(?:\s+(\d{1,3}))?/);
+  if(!m) return null;
+  let raw=m[1];
+  if(/^\d{1,3}([.]\d{3})+(,\d+)?$/.test(raw)) raw=raw.replace(/\./g,"").replace(",",".");
+  else if(/^\d+,\d+$/.test(raw)) raw=raw.replace(",",".");
+  else raw=raw.replace(/[.,]/g,"");
+  let n=parseFloat(raw); if(isNaN(n)) return null;
+  const u=m[2]||"";
+  if(/millon/.test(u)) n*=1e6; else if(/mil|luca|k/.test(u)) n*=1000;
+  if(m[3]&&/mil/.test(u)) n+=+m[3];
+  return n;
+}
+function vozPeriodo(t){
+  const hoy=currentKey();
+  if(/proximo mes|mes que viene|siguiente/.test(t)) return sumMes(hoy,1);
+  for(let i=0;i<8;i++){ const k=sumMes(hoy,i); if(t.includes(MESES_L[+k.split("-")[1]])) return k; }
+  return hoy;
+}
+function vozComercio(t){
+  t=t.replace(/\b(este mes|en el mes|el mes|en total|hasta ahora|en lo que va)\b/g,"").replace(/\s+/g," ").trim();
+  const m=t.match(/(?:gaste|gastado|gastos|compras?|pague|pagado|consumos?)\s+(?:de |en |con |a )?(?:el |la |los |las )?(.+?)(?:\s+(?:este mes|en el mes|el mes|en total|con la .*|con .*))?$/);
+  if(!m) return null;
+  const c=m[1].replace(/^(en|de|con|a)\s+/,"").trim();
+  if(!c||/^(este|el|la|mes|total|todo|tarjeta|tarjetas|visa|master|mastercard|dolares)$/.test(c)) return null;
+  return c;
+}
+function vozResponder(frase){
+  if(vozEscuchando) vozParar();
+  const t=VSIN(frase);
+  document.getElementById("voz-txt").textContent="“"+frase.trim()+"”";
+  const r=vozInterpretar(t);
+  document.getElementById("voz-res").innerHTML=`<div class="box" style="margin-top:12px"><div style="font-size:17px;font-weight:800;line-height:1.35">${r.txt}</div>${r.sub?`<div class="sub" style="margin-top:6px">${r.sub}</div>`:""}${r.acc?`<div style="margin-top:12px">${r.acc}</div>`:""}</div>`;
+  vozDecir(r.voz||r.txt.replace(/<[^>]+>/g,""));
+}
+function vozInterpretar(t){
+  const hoy=currentKey();
+  const k=vozPeriodo(t), F=fechasPer(k), M=montosPer(k), mes=mesNombre(k).toLowerCase();
+  const tarj=M.visa+M.mc;
+  const btn=(txt,fn)=>`<button class="btn bs bp" onclick="closeOv('ov-voz');${fn}">${txt}</button>`;
+
+  // 1) Cargar un gasto
+  if(/^(carga|cargar|carga|anota|anotar|agrega|agregar|suma|sumar|registra|registrar)\b/.test(t)||/\b(carga|anota|agrega)\b.*\b(en|de)\b/.test(t)){
+    const n=vozNumero(t);
+    const tar=/master/.test(t)?"master":"visa";
+    const usd=/dolar|usd/.test(t);
+    const cm=t.match(/(\d+)\s*cuotas?/); const c=cm?+cm[1]:1;
+    let desc=(t.match(/\b(?:en|de|para)\s+(.+?)(?:\s+(?:con|en)\s+(?:la\s+)?(?:visa|master|mastercard|\d+\s*cuotas?).*)?$/)||[])[1]||"";
+    desc=desc.replace(/\b\d[\d.,]*\s*(mil|lucas|pesos|dolares)?\b/g,"").replace(/\s+/g," ").trim().toUpperCase();
+    if(!n) return {txt:"No entendí el monto. Probá: “cargá 15 mil en YPF con la Visa”."};
+    openModalGasto();
+    document.getElementById("g-desc").value=desc||"";
+    document.getElementById("g-tar").value=tar;
+    document.getElementById("g-mon").value=usd?"USD":"ARS";
+    document.getElementById("g-monto").value=n;
+    document.getElementById("g-cuotas").value=c;
+    updPer(); updCuota();
+    closeOv("ov-voz"); openOv("ov-gasto");
+    return {txt:`Te dejé cargado ${usd?$u(n):$p(n)}${desc?" en "+desc:""} con la ${tar==="visa"?"Visa":"Master"}${c>1?` en ${c} cuotas`:""}. Revisalo y tocá Guardar.`};
+  }
+  // 2) Dólares
+  if(/dolar|usd|verdes/.test(t)){
+    if(!M.usd) return {txt:`No hay consumos en dólares en el resumen de ${mes}.`};
+    return {txt:`Tenés ${$u(M.usd)} en el resumen de ${mes}.`,sub:`Comprá ${$u(Math.ceil(M.usd))} y pagalos en dólares entre el ${fCorta(F.c)} y el ${fCorta(F.v)}. En pesos serían unos ${$p(M.usd*(cfg.usd||1517)*1.3)}.`,acc:btn("Ver dólares","go('dolares')")};
+  }
+  // 3) Cuándo cierra
+  if(/cierra|cierre/.test(t)){
+    const d=diasHasta(F.c);
+    return {txt:`La tarjeta ${d>=0?"cierra":"cerró"} el ${fCorta(F.c)}${d>0?`, faltan ${d} días`:d===0?", hoy":""}.`,sub:`Lo que compres hasta ese día entra en el resumen de ${mes}, que vence el ${fCorta(F.v)}.`};
+  }
+  // 4) Disponible
+  if(/disponible|queda|sobra|alcanza|falta/.test(t)){
+    const ti=ingresosPorPer(k), tf=fijosPorPer(k), d=ti-tf-tarj;
+    if(!ti) return {txt:"Todavía no cargaste ingresos, así que no puedo calcular cuánto te queda.",acc:btn("Cargar ingresos","go('ingresos')")};
+    return {txt:d>=0?`Te quedan ${$p(d)} en ${mes}.`:`Te faltan ${$p(-d)} en ${mes}.`,sub:`Ingresos ${$p(ti)} − fijos ${$p(tf)} − tarjetas ${$p(tarj)}.`};
+  }
+  // 5) Cuotas
+  if(/cuota/.test(t)){
+    const cuo=itemsDePer(k).filter(x=>x.g.c>1&&monDe(x.g)==="ARS"), tot=cuo.reduce((s,x)=>s+x.g.mpc,0)+(OTRAS_CUOTAS[k]||0);
+    const fin=cuo.filter(x=>x.nro===x.g.c);
+    return {txt:`En el resumen de ${mes} pagás ${$p(tot)} de cuotas, ${cuo.length} compras.`,sub:fin.length?`Terminan: ${fin.slice(0,4).map(x=>x.g.d).join(", ")}${fin.length>4?" y más":""}.`:"",acc:btn("Ver cuotas","go('tarjetas')")};
+  }
+  // 6) Gasté en X / compras de X
+  const com=vozComercio(t);
+  if(com){
+    const plano=x=>sinAcentos(x).replace(/[^a-z0-9|]/g,"");
+    const alias=VOZ_ALIAS[sinAcentos(com)];
+    const pats=(alias||com).split("|").map(plano).filter(Boolean);
+    let items=nuevos.filter(g=>pats.some(q=>plano(g.d).includes(q)));
+    if(!items.length&&!alias){ const w=sinAcentos(com).split(" ").filter(x=>x.length>=4); if(w.length) items=nuevos.filter(g=>plano(g.d).includes(plano(w[0]))); }
+    if(!items.length) return {txt:`No encontré gastos de “${com}”.`,acc:btn("Buscar","abrirBuscar()")};
+    const ars=items.filter(g=>monDe(g)==="ARS").reduce((s,g)=>s+g.mpc*g.c,0), usd=items.filter(g=>monDe(g)==="USD").reduce((s,g)=>s+g.mpc*g.c,0);
+    const ult=[...items].sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+    return {txt:`En ${com} gastaste ${ars?$p(ars):""}${ars&&usd?" y ":""}${usd?$u(usd):""}, en ${items.length} ${items.length===1?"compra":"compras"}.`,sub:`La última: ${fCorta(ult.fecha)}, ${$m(ult.mpc*ult.c,monDe(ult))}.`,acc:btn("Ver las compras",`abrirBuscar();setTimeout(()=>{document.getElementById('q-buscar').value=${JSON.stringify(com).replace(/"/g,"&quot;")};rBuscar()},80)`)};
+  }
+  // 7) Cuánto gasté (total del mes)
+  if(/gaste|gastado|gastos nuevos|compre|consumi/.test(t)){
+    const nv=itemsDePer(k).filter(x=>x.g.origen!=="resumen"&&x.nro===1);
+    const ars=nv.filter(x=>monDe(x.g)==="ARS").reduce((s,x)=>s+x.g.mpc*x.g.c,0);
+    if(!nv.length) return {txt:`Todavía no hay compras nuevas en el resumen de ${mes}.`};
+    return {txt:`En ${mes} hiciste ${nv.length} ${nv.length===1?"compra":"compras"} por ${$p(ars)}.`,sub:"Es el total de cada compra, aunque sea en cuotas.",acc:btn("Ver gastos","go('nuevos')")};
+  }
+  // 8) Fijos / ingresos
+  if(/fijo/.test(t)) return {txt:`Tus gastos fijos de ${mes} suman ${$p(fijosPorPer(k))}.`,acc:btn("Ver fijos","go('fijos')")};
+  if(/ingreso|sueldo|cobro|entra/.test(t)){ const ti=ingresosPorPer(k); return {txt:ti?`Tus ingresos de ${mes} son ${$p(ti)}.`:"No tenés ingresos cargados.",acc:btn("Ver ingresos","go('ingresos')")}; }
+  // 9) Visa / Master / vencimiento / resumen / tarjeta
+  if(/visa/.test(t)&&!/master/.test(t)) return {txt:`La Visa del resumen de ${mes} es ${$p(M.visa)}${M.usdV?` más ${$u(M.usdV)}`:""}. Vence el ${fCorta(F.v)}.`};
+  if(/master/.test(t)) return {txt:`La Mastercard del resumen de ${mes} es ${$p(M.mc)}${M.usdM?` más ${$u(M.usdM)}`:""}. Vence el ${fCorta(F.v)}.`};
+  if(/vence|vencimiento|pago|pagar|resumen|tarjeta|debo|cuanto (es|sale)/.test(t)){
+    const d=diasHasta(F.v);
+    return {txt:`El resumen de ${mes} es ${$p(tarj)}${M.usd?` más ${$u(M.usd)}`:""}. Vence el ${fCorta(F.v)}${d>0?`, en ${d} días`:d===0?", hoy":""}.`,sub:`Visa ${$p(M.visa)} · Mastercard ${$p(M.mc)}.`,acc:btn("Ver tarjetas","go('tarjetas')")};
+  }
+  // 10) Buscar
+  const bm=t.match(/^(?:busca|buscar|mostrame|mostra)\s+(.+)$/);
+  if(bm){ closeOv("ov-voz"); abrirBuscar(); setTimeout(()=>{ document.getElementById("q-buscar").value=bm[1]; rBuscar(); },80); return {txt:`Buscando “${bm[1]}”.`}; }
+  return {txt:"No te entendí. Probá con alguna de estas:",sub:VOZ_EJEMPLOS.slice(0,4).join(" · "),voz:"No te entendí. Probá con otra pregunta."};
+}
 
 // ── OVERLAY UTILS ─────────────────────────────
 function openOv(id){document.getElementById(id).classList.add("open")}
